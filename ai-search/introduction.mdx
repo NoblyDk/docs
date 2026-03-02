@@ -1,0 +1,331 @@
+---
+title: "AI Search introduction"
+description: "Learn how Nobly AI Search works, how results are ranked and scored, and how to get the best results."
+icon: "magnifying-glass"
+---
+
+## Overview
+
+Nobly AI Search combines two fundamentally different search technologies to find documents:
+
+- **BM25 (Text/Keyword Search):** Traditional full-text search that finds documents containing the exact words you typed. Similar to how a search engine matches keywords — it looks for the specific terms in your query across document text, keywords, and metadata.
+
+- **Vector/Semantic Search:** AI-powered search that understands the *meaning* behind your query. Even if a document doesn't contain the exact words you typed, it can be found if it covers the same concept. For example, searching "medical expenses" could find documents about "health insurance claims" or "hospital invoices."
+
+These two technologies are combined using a ranking fusion algorithm to give you the most relevant results.
+
+## Search modes
+
+AI Search offers four search modes, selectable from the settings panel (gear icon):
+
+### Auto (Default)
+
+The system automatically picks the best search strategy based on what you typed. This is the recommended mode for most users. See the [Auto mode](#auto-mode---intelligent-query-detection) section for details on how it decides.
+
+### Text / Keyword
+
+Pure text-based search using BM25 ranking. The system looks for exact term matches across document content, keywords, and metadata.
+
+**Weights:** 100% keyword search, 0% semantic search, no ColBERT reranking.
+
+**Best for:**
+- Known document IDs or reference numbers (e.g., "INV-2024-0847")
+- Specific names or codes
+- When you know exactly what term should appear in the document
+
+### Hybrid
+
+Combines keyword search and semantic search to balance exact matches with conceptual relevance.
+
+**Weights:** 70% keyword search, 30% semantic search, no ColBERT reranking.
+
+**Best for:**
+- Short queries mixing terms with general language (e.g., "Hansen policy")
+- When you want exact matches but also conceptually related results
+- Queries containing numbers mixed with descriptive words
+
+### Semantic
+
+Full meaning-based search with advanced reranking. The system generates AI embeddings of your query and compares them against document embeddings to find conceptually similar content. Includes ColBERT token-level reranking for the most precise results.
+
+**Weights:** 50% keyword search, 50% semantic search, ColBERT reranking enabled.
+
+**Best for:**
+- Natural language questions (e.g., "documents about pension changes for early retirement")
+- When you're not sure what exact terms appear in the document
+- Exploratory searching across a broad topic area
+
+## Auto mode - Intelligent query detection
+
+When set to Auto (the default), the system analyzes your query to pick the best strategy:
+
+| Query pattern | Detected mode | Example |
+|---|---|---|
+| All terms are codes, numbers, or IDs (digits, dashes, slashes, dots, colons) | **Keyword** | `2001701234`, `INV-2024-0847`, `12.34.56` |
+| Short query (1-2 words) | **Hybrid** | `Hansen policy`, `invoice` |
+| Contains a long number (4+ digits) mixed with text | **Hybrid** | `customer 847291` |
+| Longer natural language (3+ words, not all codes) | **Semantic** | `find all pension documents from 2024` |
+
+The resolved mode is returned in each search response, so you can see which strategy was actually used.
+
+## How results are ranked
+
+The ranking process uses multiple stages depending on the search mode:
+
+### Stage 1: BM25 Keyword Ranking
+
+A full-text search ranks documents by how well they match your query terms. This considers:
+- Term frequency (how often your search terms appear)
+- Document length (shorter documents with the same matches score higher)
+- Term rarity (rarer terms contribute more to the score)
+
+Results from BM25 are ranked 1st, 2nd, 3rd, etc.
+
+### Stage 2: Vector Similarity Ranking (Hybrid/Semantic modes only)
+
+Your query is converted into a mathematical vector (a high-dimensional numerical representation of its meaning) and compared against pre-computed vectors for every indexed document chunk. Documents whose vectors are closest to your query vector rank highest.
+
+This is measured as **cosine similarity** (0.0 = completely unrelated, 1.0 = identical meaning).
+
+Results from vector search are ranked 1st, 2nd, 3rd, etc. independently of BM25.
+
+### Stage 3: Reciprocal Rank Fusion (RRF)
+
+When both BM25 and vector rankings exist, they are combined using Reciprocal Rank Fusion (RRF). This mathematical formula merges both ranked lists into a single ordering:
+
+- A document ranked **#1 in both** BM25 and vector gets the highest combined score
+- A document ranked **#100 in BM25 but #1 in vector** still ranks well — fusion ensures neither ranking system fully dominates
+- The weighting between BM25 and vector is controlled by the search mode (e.g., 70/30 in Hybrid, 50/50 in Semantic)
+
+### Stage 4: ColBERT Reranking (Semantic mode only)
+
+ColBERT is an advanced reranking step that provides more precise scoring than basic vector similarity. It works at the **token level** — instead of comparing your entire query as one vector, it compares each word individually against the document's words, then aggregates the best matches.
+
+This means ColBERT can distinguish subtle differences that dense vectors might miss. When ColBERT is active, its scores replace RRF as the primary ranking signal.
+
+### Summary of ranking by mode
+
+| Mode | Stage 1 | Stage 2 | Stage 3 | Stage 4 | Final ranking signal |
+|---|---|---|---|---|---|
+| Keyword | BM25 | - | - | - | BM25 rank |
+| Hybrid | BM25 | Vector | RRF fusion | - | RRF score |
+| Semantic | BM25 | Vector | RRF fusion | ColBERT | ColBERT score |
+
+## Understanding the relevance score
+
+Each result displays a **relevance score from 0 to 100** shown as a percentage. This score is designed to give an intuitive sense of how well a result matches your query.
+
+### How the score is calculated
+
+1. **Normalization:** The top-scoring result's raw ranking signal (ColBERT score or RRF score) is treated as the reference point. All other results are scaled proportionally.
+
+2. **Score cap:** An absolute quality anchor limits how high scores can go. This prevents misleading "100% match" scores when results are only loosely related.
+
+   - **In Semantic/Hybrid mode:** The cap is based on **cosine similarity** — the mathematical similarity between your query and the best result. If the best result has 0.85 cosine similarity, scores are capped at 85.
+   - **In Keyword mode:** The cap is estimated from **term overlap** — what percentage of your query terms were actually found in the results. Even 100% term overlap caps at ~95 (exact term matches don't guarantee perfect relevance).
+
+### What the score means
+
+- **Scores are relative to the result set.** A score of 78 means "this result is 78% as relevant as the theoretical best match," not "we are 78% sure this is correct."
+- **The top result will always have the highest score**, but its absolute value depends on query quality. A strong match might show 92; a weaker query might top out at 55.
+- **Lower scores are not necessarily bad.** In keyword mode with partial term matches, the top result might score 60 — that's expected and can still be the right document.
+- **Scores always decrease** from the first result to the last. The ordering matches the underlying ranking signal.
+
+### Typical score ranges
+
+| Mode | Typical top score | Notes |
+|---|---|---|
+| Keyword | 30-80 | Depends on how many query terms matched |
+| Hybrid | 50-90 | Blended signal is usually stronger |
+| Semantic | 60-100 | Vector similarity + ColBERT produces the richest signal |
+
+## Match sources - Why did this result appear?
+
+Hovering over (or clicking) a result's relevance score reveals detailed information about *why* this result was returned. Each result can have one or more match sources:
+
+### TextContent
+
+The document's text content was semantically similar to your query. This means the AI understood a conceptual connection between your query and the document's actual text, even if the exact words differ.
+
+When available, the match detail shows which page numbers contain the relevant text and an excerpt of the matching passage.
+
+### Keywords
+
+One or more of the document's OnBase keyword values matched terms in your query. The match detail shows exactly which keyword type and value matched, and which of your query terms caused the match.
+
+**Example:** Searching for `847291` might show:
+> **Keywords** — Kundenummer: 847291
+
+### Metadata
+
+The document's metadata fields (document name, document type, or creator username) matched terms in your query.
+
+**Example:** Searching for `Hansen` might show:
+> **Metadata** — DocumentName: Policy-Hansen-2024.pdf
+
+### Multiple sources
+
+A result can appear from multiple sources simultaneously. A result that matches via both Keywords and TextContent is generally a stronger match than one appearing from a single source — it means the document matched both on exact data and on conceptual meaning.
+
+## What gets searched
+
+When you run an AI search, your query is matched against a composite of all available information about each document:
+
+- **Document name** — the file/document title
+- **Document type name** — the OnBase document type
+- **Creator** — the username that stored the document
+- **All keyword values** — every keyword type and value assigned to the document (formatted as "type: value")
+- **Full document text content** — the entire extracted text from the document (PDF text, Word content, etc.)
+
+All of these are combined into a single searchable index, so a keyword search for "Hansen" will match whether "Hansen" appears in the document name, a keyword value, the creator field, or within the document's actual text.
+
+For **semantic/vector search**, the same composite content is used to generate document embeddings, so the AI model understands the full context of each document.
+
+## Search query tips
+
+### For exact lookups (IDs, numbers, codes)
+
+Just type the value directly. Auto mode will detect it as a code and use fast keyword-only search.
+
+> `2001701234`
+> `INV-2024-0847`
+
+### For finding specific documents
+
+Use a few distinctive terms. Short queries trigger Hybrid mode, which balances exact and semantic matching.
+
+> `Hansen pension`
+> `insurance policy 2024`
+
+### For exploratory / conceptual search
+
+Describe what you're looking for in natural language. Longer queries trigger full Semantic mode with ColBERT reranking.
+
+> `documents about employee health benefits changes`
+> `customer complaints regarding delayed payments`
+
+### General advice
+
+- **Be specific when you can.** More distinctive terms lead to better BM25 matches.
+- **Use natural language for broad topics.** The semantic engine excels at understanding intent.
+- **Don't worry about exact wording.** Semantic search finds documents based on meaning, not just keywords.
+- **Try different modes** if Auto doesn't give the results you expect. Switching to Keyword mode can help when you know exact terms exist; switching to Semantic can help when exploring.
+
+## Search operators and syntax
+
+Currently, AI Search does **not** support advanced search operators. The following do **not** work:
+
+| Syntax | Status | Notes |
+|---|---|---|
+| `*` (wildcard) | Not supported | Treated as a literal character |
+| `"exact phrase"` | Not supported | Quotes are treated as literal characters |
+| `AND` / `OR` | Not supported | Treated as regular words |
+| `-term` (exclusion) | Not supported | Treated as a literal character |
+| `field:value` | Not supported | Treated as regular text |
+
+Your query text is used as-is for both the keyword and semantic search paths.
+
+**However**, because the search uses both BM25 and semantic matching:
+- BM25 naturally handles multi-word queries by matching individual terms (each word is searched independently)
+- Semantic search understands phrasing and context, so typing `health insurance claims` will find documents about that topic even without phrase operators
+- The BM25 tokenizer may apply stemming at the database level, which provides some automatic fuzzy matching for word variations
+
+## Advanced settings
+
+Clicking the gear icon next to the search bar opens the settings panel with these options:
+
+### Search mode
+
+Select between Auto, Text/Keyword, Hybrid, or Semantic. See [Search modes](#search-modes) for details.
+
+### Visible columns
+
+Toggle which columns appear in the results table:
+- Document ID
+- Document Name
+- Document Type
+- Created By
+- File Extension
+
+### Keywords
+
+Add OnBase keyword types as additional columns in the results table. This lets you see keyword values directly in the search results without opening each document. Click "Add keyword..." to select from available keyword types.
+
+### Column order
+
+Drag and drop to reorder how columns appear in the results table. The score column always remains first.
+
+### Max results
+
+Control how many results are returned: 10, 20, 50, 100, 200, 500, or 1000. Higher limits take longer to process, especially in Semantic mode where each result requires embedding computation. The server may enforce a maximum cap.
+
+## Understanding different score ranges
+
+Here are practical examples of what different score ranges typically mean:
+
+### High scores (75-100)
+
+Strong match. The document is highly relevant to your query. In semantic mode, this indicates high conceptual similarity. In keyword mode, this means most or all of your search terms were found.
+
+### Medium scores (45-74)
+
+Moderate match. The document is related to your query but may not be a direct hit. Could be:
+- A partial keyword match (some terms found, others not)
+- A conceptually related document that covers adjacent topics
+- A document where your terms appear but in different contexts
+
+### Low scores (20-44)
+
+Weak match. The document has some tenuous connection to your query. Worth checking if the higher-ranked results didn't have what you need, but don't expect a strong match.
+
+### Very low scores (below 20)
+
+Marginal match. Typically only appears when few results are available and the system is returning the least-bad options. Consider refining your query.
+
+## Security and permissions
+
+AI Search respects OnBase document security at all times:
+
+- **Only documents the user has permission to view are returned.** Permission checking happens at the database level during search execution, not after.
+- **Security keywords** (keyword types flagged for security) are synced to the search index and used for access control evaluation.
+- **User group permissions** are synced periodically (every 30 minutes by default) from OnBase to the search index.
+- A user will **never see documents** in search results that they would not be able to access through normal OnBase document retrieval.
+
+If a user reports "missing" documents in search results, verify that:
+1. The document has been indexed (indexing is a separate process)
+2. The user's group has permission to the document type
+3. Security keyword restrictions are not filtering the document out
+
+## Frequently asked questions
+
+<AccordionGroup>
+  <Accordion title="Why do I get different results when I rephrase my query?">
+    Different words trigger different search strategies. In Semantic mode, the AI embedding of "medical bills" is different from "hospital invoices" — even though they're related, the vector distances to various documents will differ. BM25 results also change because different terms match different documents. This is normal and expected.
+  </Accordion>
+
+  <Accordion title="Why is the top score only 55%?">
+    The relevance score is anchored by an absolute quality signal. A top score of 55% means the best match has moderate (not high) similarity to your query. This is common for keyword-only searches with partial term overlap, or for semantic searches on broad/vague queries. The results may still be exactly what you need — the score indicates match confidence, not document quality.
+  </Accordion>
+
+  <Accordion title="Can I search for documents by date?">
+    Date searching is not currently part of the AI search text query. If dates appear in document keywords, they can be matched as text (e.g., searching "2024" will match keyword values containing "2024"). For structured date filtering, use the standard document search mode.
+  </Accordion>
+
+  <Accordion title="What's the difference between AI Search and standard Document Search?">
+    **Standard Document Search** uses structured filters: you select document types, date ranges, and keyword values from predefined fields. It queries the OnBase database directly with exact criteria.
+
+    **AI Search** uses free-text input against a separate search index (PostgreSQL with BM25 + vector embeddings). It can find documents by meaning, not just exact field values. However, it does not support structured filters like date ranges or document type restrictions — it searches across everything you have access to.
+  </Accordion>
+
+  <Accordion title="Why doesn't wildcard search work?">
+    The search system does not parse special characters as operators. The `*` character and quote marks are treated as literal text. Instead of wildcards, use the Semantic or Hybrid mode — the AI embedding naturally handles variations and related terms without needing explicit wildcards.
+  </Accordion>
+
+  <Accordion title="What happens when I select Semantic mode but type a document ID?">
+    The system will still run semantic search, but since a document ID like "2001701234" has no semantic meaning, the vector search component will be less useful. The BM25 component (which still runs at 50% weight in Semantic mode) will find the document by exact match. For ID lookups, Auto or Keyword mode is more efficient.
+  </Accordion>
+
+  <Accordion title="How current is the search index?">
+    Documents must be indexed before they appear in AI Search results. The index is updated through a separate indexing pipeline — newly stored documents may not appear immediately. Security permissions are synced every 30 minutes by default. Check with your system administrator for the indexing schedule specific to your environment.
+  </Accordion>
+</AccordionGroup>

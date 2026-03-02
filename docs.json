@@ -38,6 +38,12 @@
             ]
           },
           {
+            "group": "AI search",
+            "pages": [
+              "ai-search/introduction"
+            ]
+          },
+          {
             "group": "AI tools",
             "pages": [
               "ai-tools/cursor",
