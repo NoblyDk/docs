@@ -151,7 +151,7 @@ When available, the match detail shows which page numbers contain the relevant t
 
 ### Keywords
 
-One or more of the document's OnBase keyword values matched terms in your query. The match detail shows exactly which keyword type and value matched, and which of your query terms caused the match.
+One or more of the document's Nobly Insight keyword values matched terms in your query. The match detail shows exactly which keyword type and value matched, and which of your query terms caused the match.
 
 **Example:** Searching for `847291` might show:
 > **Keywords** — Kundenummer: 847291
@@ -172,7 +172,7 @@ A result can appear from multiple sources simultaneously. A result that matches 
 When you run an AI search, your query is matched against a composite of all available information about each document:
 
 - **Document name** — the file/document title
-- **Document type name** — the OnBase document type
+- **Document type name** — the Nobly Insight document type
 - **Creator** — the username that stored the document
 - **All keyword values** — every keyword type and value assigned to the document (formatted as "type: value")
 - **Full document text content** — the entire extracted text from the document (PDF text, Word content, etc.)
@@ -249,7 +249,7 @@ Toggle which columns appear in the results table:
 
 ### Keywords
 
-Add OnBase keyword types as additional columns in the results table. This lets you see keyword values directly in the search results without opening each document. Click "Add keyword..." to select from available keyword types.
+Add Nobly Insight keyword types as additional columns in the results table. This lets you see keyword values directly in the search results without opening each document. Click "Add keyword..." to select from available keyword types.
 
 ### Column order
 
@@ -284,12 +284,12 @@ Marginal match. Typically only appears when few results are available and the sy
 
 ## Security and permissions
 
-AI Search respects OnBase document security at all times:
+AI Search respects Nobly Insight document security at all times:
 
 - **Only documents the user has permission to view are returned.** Permission checking happens at the database level during search execution, not after.
 - **Security keywords** (keyword types flagged for security) are synced to the search index and used for access control evaluation.
-- **User group permissions** are synced periodically (every 30 minutes by default) from OnBase to the search index.
-- A user will **never see documents** in search results that they would not be able to access through normal OnBase document retrieval.
+- **User group permissions** are synced periodically (every 30 minutes by default) from Nobly Insight to the search index.
+- A user will **never see documents** in search results that they would not be able to access through normal Nobly Insight document retrieval.
 
 If a user reports "missing" documents in search results, verify that:
 1. The document has been indexed (indexing is a separate process)
@@ -312,7 +312,7 @@ If a user reports "missing" documents in search results, verify that:
   </Accordion>
 
   <Accordion title="What's the difference between AI Search and standard Document Search?">
-    **Standard Document Search** uses structured filters: you select document types, date ranges, and keyword values from predefined fields. It queries the OnBase database directly with exact criteria.
+    **Standard Document Search** uses structured filters: you select document types, date ranges, and keyword values from predefined fields. It queries the Nobly Insight database directly with exact criteria.
 
     **AI Search** uses free-text input against a separate search index (PostgreSQL with BM25 + vector embeddings). It can find documents by meaning, not just exact field values. However, it does not support structured filters like date ranges or document type restrictions — it searches across everything you have access to.
   </Accordion>
