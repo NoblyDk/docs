@@ -1,0 +1,195 @@
+---
+title: "Administration and best practices"
+description: "Manage Caseflow templates, permissions, and access control — plus implementation patterns, troubleshooting, and delivery checklists."
+icon: "gear"
+---
+
+## Permissions and access control
+
+The implementation enforces permission checks in multiple places:
+
+- **Class-level create rights** for create buttons and pickers
+- **Object-level rights** for modify, delete, and history in context menus
+- **Template accessibility** by group matching
+
+If users report missing actions, validate object and class privilege APIs first. If users report missing template views, validate template group assignment and default fallback configuration.
+
+## Template administration
+
+Template administration supports:
+
+- Application and class selection
+- Create, edit, and delete templates
+- Set or unset default template
+- Assign user groups
+- Assign precedence
+- Define template type — `Create`, `Update`, or `Preview Pane`
+
+### Governance rules
+
+- When user groups are assigned, precedence should be defined
+- Precedence conflicts are blocked and reported
+- Preview Pane templates are intended for read-focused search preview behavior
+- Use group + precedence for role-specific behavior
+- Keep a reliable default template as fallback
+
+## Recommended implementation patterns
+
+### Pattern A: Child records bound to current object
+
+Use `ObjectSearch` with a relation constraint and create defaults:
+
+```html
+<ObjectSearch
+  queryKey="child-items"
+  config='{
+    "className":"ChildClass",
+    "displayColumns":[{"dottedName":"Name"}],
+    "constraints":[{"dottedName":"ParentRelation","operator":"=","value":"{{stock.objectid}}"}]
+  }'
+  allowCreate="true"
+  createDefaults='{"ParentRelation":"{{stock.objectid}}"}'
+/>
+```
+
+### Pattern B: Relation selection with attribute copy
+
+Use `RelationPicker` with `onChanged` and `${selectedObject}` values to auto-populate fields when a relation is selected.
+
+### Pattern C: Save-time validation rules
+
+Use `SaveButton` with `onBeforeSave` and `throwError` to enforce business rules before persistence.
+
+### Pattern D: Script-orchestrated post-processing
+
+Use `ScriptButton` or `callScript` inside action chains, then refresh affected queries with `refresh:<queryKey>`.
+
+### Pattern E: UI-only computations
+
+Use [transient fields](/caseflow/state-and-persistence#transient-fields) (underscore-prefixed `_` fields) for temporary values and action-only orchestration.
+
+## Common pitfalls and troubleshooting
+
+<AccordionGroup>
+  <Accordion title="No template rendered">
+    Check:
+
+    - The class has a template of the requested type
+    - The user belongs to a group that can access the template, or a default fallback exists
+  </Accordion>
+
+  <Accordion title="Field does not persist">
+    Likely causes:
+
+    - Attribute name mismatch
+    - Transient field (`_...`) used unintentionally
+    - Relation or nested path used where only a single-level attribute is supported
+  </Accordion>
+
+  <Accordion title="Save button disabled">
+    Check:
+
+    - Validation errors exist
+    - No dirty state and `requireDirty` is `true`
+    - Object-level permissions are insufficient
+  </Accordion>
+
+  <Accordion title="Action not executing">
+    Check:
+
+    - Malformed JSON in action params
+    - Condition in `when` resolves to false
+    - Runtime variable name mismatch
+    - Missing query key referenced by refresh action
+  </Accordion>
+
+  <Accordion title="Dynamic dataset not refreshing">
+    Check:
+
+    - `datasetQueryKey` is configured on the `EditableField`
+    - `refreshDataset:<datasetQueryKey>` action is used
+  </Accordion>
+
+  <Accordion title="Relation auto-populate fails">
+    Check:
+
+    - The selected relation object actually contains the referenced attribute
+    - Nested relation path correctness
+    - Use `??` fallback for optional values
+  </Accordion>
+
+  <Accordion title="Script works in test but not in UI">
+    Check:
+
+    - Script type (`workview_autofill` vs `workview_action`)
+    - Expected input payload keys
+    - Execution rights and configured script engine endpoint
+  </Accordion>
+</AccordionGroup>
+
+## Delivery checklist
+
+Before go-live, confirm:
+
+1. All business-critical classes have Create and Update templates
+2. Group-based template precedence and defaults are configured intentionally
+3. All search components have stable `queryKey` values where refresh chaining is needed
+4. Save validation rules are implemented with clear user-facing error messages
+5. Script dependencies (slugs, secrets, bindings) are deployed and tested in target environment
+6. Permission-sensitive actions (edit, delete, history, create) are tested with representative user roles
+7. Preview Pane templates are configured for search-heavy roles where relevant
+8. Transient fields are used only for UI/runtime logic and not for required persisted data
+
+## Implementation sequence
+
+For new Caseflow classes, follow this sequence:
+
+1. Confirm class/attribute model and relation paths with business owners
+2. Define Create and Update templates, plus Preview Pane where search workflows demand it
+3. Implement base form fields with `EditableField`, including required and regex/validator rules
+4. Add relation handling using `RelationPicker` and/or `RelatedObject` aliases
+5. Add object and document lists with explicit `queryKey` values
+6. Attach save hooks and script actions for business automation
+7. Validate role-based template access and precedence
+8. Run UAT with scenario data and production-like permissions
+
+## UAT scenario matrix
+
+| Scenario | What to verify |
+|---|---|
+| Create object | Defaults applied, required fields enforced, save succeeds |
+| Update object | Dirty tracking works, save hooks execute in order |
+| Relation change | `selectedObject`-based mapping works, no stale values remain |
+| Search refresh | `refresh`/`refreshDocuments`/`refreshDataset` target intended components only |
+| Script execution | Success and failure branches behave predictably with user feedback |
+| Permission boundaries | Restricted users cannot create/edit/delete outside assigned rights |
+| Template fallback | Group-specific template selected correctly; default fallback still available |
+
+## Production hardening checklist
+
+1. Confirm all critical template actions reference valid query keys
+2. Confirm all script slugs and required credentials/config are deployed
+3. Confirm no transient fields (`_...`) are used where persistence is required
+4. Confirm document upload defaults map to valid document type and keyword IDs
+5. Confirm all validation error messages are business-readable
+6. Confirm delete permissions and destructive actions are tested with least-privileged roles
+7. Confirm object history visibility requirements with support/audit teams
+
+## Handover package
+
+Provide the following to operations teams:
+
+- Template catalog by class/type with owners and change authority
+- Component usage map — which templates depend on which scripts, actions, and query keys
+- Script dependency register — slug, purpose, expected input/output, failure behavior
+- Permission model summary — class-level and object-level assumptions
+- Troubleshooting runbook aligned to the symptoms above
+
+## Change management
+
+For safe iterative changes:
+
+- Promote template changes through lower environments with representative data
+- Include rollback-ready version snapshots of templates and scripts
+- Validate query-key refresh paths after each significant UI/action change
+- Run focused regression on create, save, relation picker, and search modules

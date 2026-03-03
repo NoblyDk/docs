@@ -24,6 +24,19 @@
             "pages": [
               "ai-search/introduction"
             ]
+          },
+          {
+            "group": "Caseflow",
+            "pages": [
+              "caseflow/introduction",
+              "caseflow/templates",
+              "caseflow/state-and-persistence",
+              "caseflow/actions-and-scripting",
+              "caseflow/form-components",
+              "caseflow/data-components",
+              "caseflow/lists-and-search",
+              "caseflow/administration"
+            ]
           }
         ]
       }

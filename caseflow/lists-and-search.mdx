@@ -1,0 +1,85 @@
+---
+title: "Lists, filters, and search operators"
+description: "Configure Caseflow list views, filter definitions, result tables, and search operators for constraints and conditions."
+icon: "filter"
+---
+
+## Filter bars and filter definitions
+
+Filter execution is based on filter definitions that contain:
+
+- Display columns
+- User inputs
+- Constraints
+- Sorting
+
+You can create, edit, and delete user-defined filter bars. The filter designer provides dedicated editors for each definition section.
+
+## User input parameterization
+
+User input parameters support:
+
+- Typed controls based on data type
+- Operator selection
+- Required-field enforcement before search execution
+
+## Result table capabilities
+
+The Caseflow result table includes:
+
+- Column sorting
+- Per-column typed filtering
+- Global text search
+- Virtualized rendering for large result sets
+- Sticky/pinned columns
+- Hide/show columns
+- Drag-to-group and hierarchical group expansion
+- Row selection including shift-range selection
+- Bulk edit and bulk delete actions
+- Object context menu with permission checks
+
+<Note>
+  Table inline editing exists but is disabled by default at table level unless explicitly enabled.
+</Note>
+
+## Search operators
+
+These operators are available for `ObjectSearch` constraints and filter definitions:
+
+| Operator | Alias | Description |
+|---|---|---|
+| `=` | `==` | Equal |
+| `!=` | `<>` | Not equal |
+| `>` | | Greater than |
+| `<` | | Less than |
+| `>=` | | Greater than or equal |
+| `<=` | | Less than or equal |
+| `like` | | Pattern match |
+| `notlike` | | Negated pattern match |
+| `null` | `isnull` | Value is null |
+| `notnull` | `isnotnull` | Value is not null |
+| `in` | | Value in list |
+| `notin` | | Value not in list |
+| `soundex` | | Phonetic match |
+
+## Action condition operators
+
+For `when` conditions in [action expressions](/caseflow/actions-and-scripting#conditional-actions), prefer text-safe comparisons where HTML quoting can be tricky:
+
+| Use | Instead of |
+|---|---|
+| `gt` | `>` |
+| `lt` | `<` |
+| `gte` | `>=` |
+| `lte` | `<=` |
+
+See [Templates and syntax](/caseflow/templates#conditional-expressions) for the full conditional expression reference.
+
+## Boolean representation
+
+Boolean values in Caseflow often appear as:
+
+- `"1"` / `"0"`
+- `"true"` / `"false"`
+
+Template and action logic should normalize expectations accordingly. When comparing booleans in conditions, test for both forms or use `isTrue`/`isFalse` operators.

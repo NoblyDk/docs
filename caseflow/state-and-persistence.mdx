@@ -1,0 +1,105 @@
+---
+title: "State, persistence, and caching"
+description: "How Caseflow manages object state, dirty tracking, save behavior, transient fields, and query caching."
+icon: "database"
+---
+
+## Object store
+
+The Caseflow runtime maintains an in-memory object store. Objects are tracked by key format based on their mode:
+
+| Key format | Mode |
+|---|---|
+| `primary:<id>` | Primary object being viewed or edited |
+| `related:<id>` | Related objects loaded via relations |
+| `search-edit:<id>` | Objects opened for editing from search results |
+| `create:<classId>` | Temporary objects in create mode |
+
+## Dirty tracking
+
+Each object tracks whether changes exist (`isDirty`) by comparing current values with original values. This drives save button state and determines which attributes are included in update calls.
+
+## Save behavior
+
+Save behavior depends on the current mode:
+
+- **Update mode** — changed attribute values are sent via attribute update calls
+- **Create mode** — a create request is generated from currently populated entries, then the object transitions to an update-like state
+
+## Validation tracking
+
+Field components can register validation errors centrally. Save buttons check this state and block the save if errors are present. See [SaveButton](/caseflow/data-components#savebutton) for details on save hooks and validation gates.
+
+## Class inheritance
+
+Name resolution for attributes and relations supports inherited class structures. This is important in environments where relation attributes or shared fields are defined in parent classes.
+
+## Transient fields
+
+Transient fields are UI-only fields that:
+
+- Start with underscore (`_`)
+- Exist in context state for variable and action logic
+- Are **never persisted** to the API
+
+### When to use transient fields
+
+Use transient fields for:
+
+- Temporary computation values
+- Intermediate user selections
+- Action-chain variables that should not be stored
+
+### Behavioral rules
+
+- You can read transient fields in templates and actions like normal fields
+- Transient entries do not participate in persistent dirty calculations
+- Transient entries are excluded from save payloads
+- Type metadata is unavailable for transient fields, so set an explicit `type` on the component
+
+### Examples
+
+A transient field for temporary display:
+
+```html
+<EditableField attributeName="_calculatedPriority" type="text" />
+```
+
+Capturing previous state into a transient field on change:
+
+```html
+<EditableField
+  attributeName="Status"
+  onChanged='setValue:{"attributeName":"_lastStatus","value":"${previousValue}"}'
+/>
+```
+
+## Query caching and refresh
+
+### Query domains
+
+Caseflow uses query caching across several domains:
+
+- Caseflow object search queries
+- Related object queries
+- Relation picker option queries
+- Document search queries
+- Editable field dataset queries
+
+### Refresh patterns
+
+Assign stable `queryKey` values to searchable components and trigger refresh through the [action engine](/caseflow/actions-and-scripting):
+
+- `refresh:<queryKey>` — refresh an object search
+- `refreshDocuments:<queryKey>` — refresh a document search
+- `refreshDataset:<queryKey>` — refresh a field dataset
+
+Invalidate narrowly using targeted query keys rather than refreshing globally.
+
+### Example
+
+Refresh multiple components after creating a related object:
+
+```html
+onCreated="refresh:case-tasks | refreshDocuments:case-documents"
+```

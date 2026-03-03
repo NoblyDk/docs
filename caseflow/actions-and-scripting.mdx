@@ -1,0 +1,149 @@
+---
+title: "Actions and scripting"
+description: "Automate Caseflow templates with the action system and script engine — conditions, chaining, and integration patterns."
+icon: "bolt"
+---
+
+## Action system overview
+
+The action system runs on event hooks (`onChanged`, `onCreated`, `onBeforeSave`, `onAfterSave`) and provides template automation without writing scripts.
+
+### Action input formats
+
+Actions can be specified as:
+
+- A single action string
+- A pipe-delimited chain: `action1 | action2`
+- A JSON array string
+- A programmatic string array
+
+### Conditional actions
+
+Actions can be guarded with a `when` clause:
+
+```text
+action:params when condition
+```
+
+The condition language includes:
+
+| Category | Operators |
+|---|---|
+| Equality | `==`, `!=` |
+| Text | `contains`, `startsWith`, `endsWith` |
+| Numeric | `gt`, `lt`, `gte`, `lte` |
+| Empty | `isEmpty`, `isNotEmpty` |
+| Boolean | `isTrue`, `isFalse` |
+| Logic | `and`, `or`, `not` |
+
+See [Templates and syntax](/caseflow/templates#conditional-expressions) for the full conditional expression reference.
+
+## Runtime variables
+
+Common runtime variables available in action expressions:
+
+| Variable | Available in |
+|---|---|
+| `${newValue}` | `onChanged` |
+| `${previousValue}` | `onChanged` |
+| `${createdObjectId}` | `onCreated` |
+| `${objectKey}` | `onCreated` |
+| `${selectedObject}`, `${selectedObject.Attribute}` | `RelationPicker` `onChanged` |
+| `${selectedObject.Relation.Attribute}` | Nested relation traversal |
+| `${changedFields}`, `${oldValues.X}`, `${newValues.X}` | Save hooks |
+| `${scriptResult}`, `${scriptResult.X}`, `${scriptError}` | Script actions |
+| `${today}`, `${now}` | All contexts |
+
+Nullish fallback is supported: `${selectedObject.DefaultStatus ?? "New"}`
+
+## Built-in actions
+
+| Action | Description |
+|---|---|
+| `close` | Close the current view |
+| `closeWindow` | Close the browser window or tab |
+| `refresh:<queryKey>` | Refresh an object search component |
+| `refreshDocuments:<queryKey>` | Refresh a document search component |
+| `refreshDataset:<queryKey>` | Refresh a field dataset |
+| `setValue:{"attributeName":"...","value":"..."}` | Set a field value on the current object |
+| `createObject:{"className":"...","attributes":{...}}` | Create a new object |
+| `throwError:{"message":"..."}` | Halt execution with a user-facing error |
+| `callScript:{"script":"...","inputs":{...}}` | Execute a script and chain results |
+
+## Practical action patterns
+
+### Refresh dependent lists
+
+```html
+onChanged="refresh:tasks-list"
+```
+
+### Capture previous state
+
+```html
+onChanged='setValue:{"attributeName":"_previous","value":"${previousValue}"}'
+```
+
+### Conditional workflow update
+
+```html
+onChanged='setValue:{"attributeName":"CompletedDate","value":"${today}"} when ${newValue} == "Completed"'
+```
+
+### Validation gate on save
+
+```html
+onBeforeSave='throwError:{"message":"Notes required"} when ${newValues.Status} == "Closed" and ${newValues.Notes} == ""'
+```
+
+## Scripting
+
+### Integration paths
+
+There are three ways to integrate scripts:
+
+1. **`autofillScript` on `EditableField`** — field-triggered autofill
+2. **`ScriptButton`** — explicit user-triggered execution
+3. **`callScript` action** — part of an action chain
+
+### Script types
+
+Caseflow uses two script types:
+
+<Tabs>
+  <Tab title="workview_autofill">
+    Triggered by field changes. The request context includes:
+
+    - Application name
+    - Class name
+    - Object ID
+    - Trigger attribute and value
+    - Target attribute list
+
+    The expected result is a values map (`{"values": {...}}`) which is applied to the target attributes.
+  </Tab>
+  <Tab title="workview_action">
+    Triggered by buttons or action chains. The request context includes:
+
+    - Application name
+    - Class name
+    - Object ID
+    - Action/script name
+    - Parameters object
+
+    Script output is available to subsequent actions as `${scriptResult}`.
+  </Tab>
+</Tabs>
+
+### ScriptButton vs callScript
+
+- Use **`ScriptButton`** for explicit user-triggered operations — "run this script now"
+- Use **`callScript` action** when the script should be part of an action chain, typically as a side effect after a change or save
+
+### Error handling
+
+- Script failures can trigger toast feedback
+- `onError` hooks can execute fallback actions
+- `throwError` can intentionally halt save/action chains with user-facing messages
+
+See [ScriptButton](/caseflow/data-components#scriptbutton) and [SaveButton](/caseflow/data-components#savebutton) for component-specific details.

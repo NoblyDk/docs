@@ -1,0 +1,99 @@
+---
+title: "Introduction to Caseflow"
+description: "Understand how Caseflow works in Nobly Insight — the object-data layer for case and process-driven business data."
+icon: "table-columns"
+---
+
+## What is Caseflow?
+
+Caseflow is the object-data layer in Nobly Insight used for case and process-driven business data. It is organized around:
+
+- **Applications** — high-level functional domains
+- **Classes** — object types inside each application
+- **Attributes** — fields on each class, including relations
+- **Objects** — individual records
+- **Filters** — reusable query definitions used in list views
+- **Templates** — UI definitions for create, update, and preview experiences
+
+## User surfaces
+
+Caseflow is exposed through four major user surfaces:
+
+<Columns cols={2}>
+  <Card title="Landing page" icon="house">
+    Application selector, filter bar tree, search parameter controls, and result table with advanced interactions.
+  </Card>
+  <Card title="Object page" icon="file-lines">
+    Full object rendering through an Update template.
+  </Card>
+  <Card title="Create page" icon="plus">
+    Class-based object creation through a Create template.
+  </Card>
+  <Card title="Search preview pane" icon="eye">
+    Uses a Preview Pane template when available. Falls back to a simple open-object action if not configured.
+  </Card>
+</Columns>
+
+## Core behavior model
+
+Caseflow behaves as a metadata-driven system:
+
+- Class and attribute metadata drives type behavior, search resolution, and validation
+- Templates define layout and interaction
+- Actions define side effects and automation
+- The script engine extends behavior beyond declarative actions
+
+## Runtime architecture
+
+The runtime is composed of five major layers:
+
+<AccordionGroup>
+  <Accordion title="Caseflow Object Context">
+    The state store for primary, related, search-loaded, and create-mode objects. It provides:
+
+    - Name-to-ID resolution utilities
+    - Save, create, relation fetch, aliasing, and validation orchestration
+  </Accordion>
+
+  <Accordion title="Template Engine">
+    Parses HTML-like templates and supports:
+
+    - Variables, conditionals, loops, and custom components
+    - Template variable resolution from a computed scope
+
+    See [Templates and syntax](/caseflow/templates) for full details.
+  </Accordion>
+
+  <Accordion title="Component Registry">
+    Maps template component names to their React implementations. Includes Caseflow-specific components and shared utility components.
+
+    See [Form components](/caseflow/form-components) and [Data and action components](/caseflow/data-components) for the full reference.
+  </Accordion>
+
+  <Accordion title="Action Engine">
+    Runs on event hooks (`onChanged`, `onCreated`, save hooks) and supports conditions, runtime variables, query refresh, create/set actions, and script calls.
+
+    See [Actions and scripting](/caseflow/actions-and-scripting) for full details.
+  </Accordion>
+
+  <Accordion title="Script Engine Integration">
+    Provides three integration paths:
+
+    - Explicit button-based execution (`ScriptButton`)
+    - Action-chain execution (`callScript` action)
+    - Field-triggered autofill scripts
+
+    See [Actions and scripting](/caseflow/actions-and-scripting) for full details.
+  </Accordion>
+</AccordionGroup>
+
+## Data and UI flow
+
+At a high level, the runtime follows this sequence:
+
+1. Load object and class metadata
+2. Select template by class and type (or explicit template name)
+3. Build runtime scope — attributes, stock values, user info, aliases
+4. Render template into components
+5. Components read and write shared object context state
+6. Save operations persist only valid, non-transient attribute updates

@@ -1,0 +1,283 @@
+---
+title: "Form components"
+description: "Reference for Caseflow form and field components — EditableField, RelatedObject, RelatedDocument, RelationPicker, and utility components."
+icon: "input-text"
+---
+
+These components are used in Caseflow templates to render and edit individual fields, relations, and documents.
+
+## EditableField
+
+Edit a single attribute in the current object context with type-aware editing, validation, datasets, and change automation.
+
+### Key capabilities
+
+- Automatic type inference from metadata
+- Explicit type override
+- Static and dynamic datasets
+- Regex and named validator support
+- Required field enforcement
+- Change-triggered actions
+- Autofill script integration
+
+### Props
+
+| Prop | Type | Required | Default | Notes |
+|---|---|---|---|---|
+| `attributeName` | `string` | Yes | — | Single-level field name. Prefix with `_` for transient/UI-only fields. |
+| `label` | `string` | No | — | Field label text. |
+| `placeholder` | `string` | No | component default | Placeholder in empty state. |
+| `type` | `text` \| `number` \| `date` \| `datetime` \| `textarea` \| `html` \| `checkbox` | No | auto-detected | Override metadata type inference. |
+| `multiline` | `boolean` | No | `false` | Forces textarea for text-like fields. |
+| `isHtml` | `boolean` | No | `false` | Enables HTML display/edit mode with sanitization. |
+| `dataset` | `string[]` | No | — | Static combobox options. |
+| `datasetConfig` | `DatasetConfig` or JSON string | No | — | Dynamic options sourced from object search. |
+| `datasetQueryKey` | `string` | No | auto-generated | Use with `refreshDataset:<key>` actions. |
+| `disabled` | `boolean` | No | `false` | Read-only input state. |
+| `regexValidation` | `string` | No | — | Pattern validation. |
+| `validationMessage` | `string` | No | generic message | Error text for regex/validator failures. |
+| `validator` | `string` | No | — | Named validator. Built-in: `mod11Check`. |
+| `initialValue` | `string` | No | — | Applied once on mount when field is empty. |
+| `required` | `boolean` | No | `false` | Blocks save when empty. |
+| `onChanged` | `string` | No | — | Single, pipe-delimited, or JSON-array action chain. |
+| `autofillScript` | `string` | No | — | Script slug for autofill execution on change. |
+| `autofillTargets` | `string` | No | — | Comma-separated target attributes for autofill result mapping. |
+
+### DatasetConfig shape
+
+```json
+{
+  "className": "Category",
+  "valueAttribute": "Code",
+  "labelAttribute": "Name",
+  "constraints": [
+    { "dottedName": "IsActive", "operator": "=", "value": "1" }
+  ],
+  "sorting": [
+    { "dottedName": "Name", "direction": "asc" }
+  ]
+}
+```
+
+### Examples
+
+Dynamic dataset:
+
+```html
+<EditableField
+  attributeName="Category"
+  label="Category"
+  datasetConfig='{
+    "className":"Category",
+    "valueAttribute":"Code",
+    "labelAttribute":"Name",
+    "sorting":[{"dottedName":"Name","direction":"asc"}]
+  }'
+  datasetQueryKey="category-options"
+/>
+```
+
+Validation with change action:
+
+```html
+<EditableField
+  attributeName="Phone"
+  regexValidation="^[0-9\\s\\-\\+]{0,20}$"
+  validationMessage="Invalid phone format"
+  onChanged='refresh:contact-search when ${newValue} != ${previousValue}'
+/>
+```
+
+Transient field as template selector:
+
+```html
+<EditableField
+  attributeName="_TemplateName"
+  label="Template"
+  dataset='["Summary", "Detailed", "Audit"]'
+  initialValue="Summary"
+/>
+```
+
+Change automation with guard condition:
+
+```html
+<EditableField
+  attributeName="Status"
+  onChanged='setValue:{"attributeName":"StatusChangedAt","value":"${today}"} when ${newValue} != ${previousValue}'
+/>
+```
+
+Dynamic dataset with refresh support:
+
+```html
+<EditableField
+  attributeName="Category"
+  datasetQueryKey="category-dataset"
+  datasetConfig='{
+    "className":"Category",
+    "valueAttribute":"Code",
+    "labelAttribute":"Name",
+    "sorting":[{"dottedName":"Name","direction":"asc"}]
+  }'
+/>
+<ScriptButton script="sync-categories" onSuccess="refreshDataset:category-dataset" />
+```
+
+## RelatedObject
+
+Render or edit a related object through a relation attribute. You can use it to display related data via a template or inline with child components.
+
+### Key capabilities
+
+- **View mode** — renders the related object using a template
+- **Inline mode** — uses child components directly for editable nested layouts
+- Registers an alias for cross-template reference via `{{alias.Field}}`
+
+### Props
+
+| Prop | Type | Required | Default | Notes |
+|---|---|---|---|---|
+| `relationAttrName` | `string` | Yes | — | Relation attribute on the current object. |
+| `templateName` | `string` | No | class default Update template | Used for view rendering. |
+| `mode` | `view` \| `inline` | No | `view` | `inline` for editable nested layouts. |
+| `alias` | `string` | No | — | Registers related object scope for `{{alias.Field}}`. |
+| `className` | `string` | No | — | Styling hook. |
+
+### Examples
+
+Alias-based cross-reference:
+
+```html
+<RelatedObject relationAttrName="TaskRelation" alias="task" />
+<p>Task: {{task.Name}}</p>
+<p>Created: {{task.stock.createddate}}</p>
+```
+
+Inline editing:
+
+```html
+<RelatedObject relationAttrName="TaskRelation" mode="inline">
+  <EditableField attributeName="Name" label="Task name" />
+  <EditableField attributeName="DueDate" type="date" />
+</RelatedObject>
+```
+
+## RelatedDocument
+
+Render a document-type attribute as a read-only linked or previewed document.
+
+### Props
+
+| Prop | Type | Required | Default | Notes |
+|---|---|---|---|---|
+| `attributeName` | `string` | Yes | — | Attribute holding the document ID. |
+| `label` | `string` | No | — | Field label. |
+| `placeholder` | `string` | No | component default | Empty-state text. |
+| `preview` | `inline` \| `modal` \| `none` | No | `none` | Preview mode. |
+| `previewHeight` | `string` | No | `400px` | Applies to inline mode. |
+| `defaultExpanded` | `boolean` | No | `false` | Inline preview initial expansion. |
+| `className` | `string` | No | — | Styling hook. |
+
+### Example
+
+Inline preview:
+
+```html
+<RelatedDocument
+  attributeName="MainDocument"
+  label="Main document"
+  preview="inline"
+  previewHeight="520px"
+/>
+```
+
+## RelationPicker
+
+Select or create a related object for a relation attribute with a searchable dropdown.
+
+### Key capabilities
+
+- Searchable relation dropdown
+- Optional create modal (`allowCreate`)
+- Constraints and sorting for dropdown candidates
+- `onChanged` and `onCreated` actions
+- Full selected object context (`${selectedObject}`) for auto-population
+- Nested relation traversal in runtime expressions
+
+### Props
+
+| Prop | Type | Required | Default | Notes |
+|---|---|---|---|---|
+| `relationAttrName` | `string` | Yes | — | Relation attribute to set. |
+| `displayAttributeName` | `string` | Yes | — | Attribute used for option labels. |
+| `allowCreate` | `boolean` | No | `false` | Enables create-from-picker flow. |
+| `createTemplateName` | `string` | No | class default Create template | Creation template override. |
+| `openCreatedObject` | `string` \| `boolean` | No | `false` | Open newly created object in new tab. |
+| `onCreated` | `string` | No | — | Actions executed after create flow completes. |
+| `onChanged` | `string` | No | — | Actions executed when selected relation changes. |
+| `constraints` | `SearchConstraint[]` or JSON string | No | — | Filter dropdown candidates. |
+| `sorting` | `SearchSortColumn[]` or JSON string | No | — | Order dropdown candidates. |
+| `label` | `string` | No | — | Field label. |
+| `placeholder` | `string` | No | component default | Empty-state text. |
+| `searchable` | `boolean` | No | `true` | Dropdown search toggle. |
+
+### Examples
+
+Auto-populate from selected object:
+
+```html
+<RelationPicker
+  relationAttrName="TypeRelation"
+  displayAttributeName="Name"
+  onChanged='setValue:{"attributeName":"Priority","value":"${selectedObject.DefaultPriority ?? \"Normal\"}"}'
+/>
+```
+
+Nested relation traversal:
+
+```html
+<RelationPicker
+  relationAttrName="TypeRelation"
+  displayAttributeName="Name"
+  onChanged='setValue:{"attributeName":"Step","value":"${selectedObject.StepConfigurationRelation.DefaultStep}"}'
+/>
+```
+
+Constraints and sorting:
+
+```html
+<RelationPicker
+  relationAttrName="AssigneeRelation"
+  displayAttributeName="DisplayName"
+  constraints='[
+    {"dottedName":"IsActive","operator":"=","value":"1"},
+    {"dottedName":"Department","operator":"=","value":"{{Department}}"}
+  ]'
+  sorting='[{"dottedName":"DisplayName","direction":"asc"}]'
+/>
+```
+
+## Shared utility components
+
+These components are also available in Caseflow templates:
+
+| Component | Main props | Typical usage |
+|---|---|---|
+| `DateDisplay` | `value`, `includeTime` | Present formatted date/time values. |
+| `MessageCard` | `author`, `timestamp`, `content`, `isDraft` | Render communication or event cards. |
+| `CollapsibleSection` | `title`, `badge`, `defaultExpanded` | Progressive disclosure for large templates. |
+| `Tabs` + `Tab` | `defaultValue` on `Tabs`; `value`, `label`, `badge` on `Tab` | Segment complex forms or dashboards. |
+
+### Example
+
+```html
+<Tabs defaultValue="summary">
+  <Tab value="summary" label="Summary">
+    <EditableField attributeName="Title" />
+  </Tab>
+  <Tab value="documents" label="Documents" badge="{{DocumentCount}}">
+    <DocumentSearch config='{"documentTypeIds":[116]}' />
+  </Tab>
+</Tabs>
+```

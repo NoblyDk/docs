@@ -1,0 +1,338 @@
+---
+title: "Data and action components"
+description: "Reference for Caseflow data display, search, and action components — ObjectSearch, DocumentSearch, CreateObjectButton, SaveButton, ScriptButton, and internal components."
+icon: "table-list"
+---
+
+These components handle data display, search results, object creation, saving, and script execution in Caseflow templates.
+
+## ObjectSearch
+
+Query and render objects in table, cards, or list format with row actions, editing, and create support.
+
+### Key capabilities
+
+- Declarative query config with class, display columns, constraints, and sorting
+- Row context menu — edit, delete, documents, history
+- Editable mode with modal editing
+- Create mode with defaults
+- Optional per-row document lookup via `documentSearchConfig`
+- `queryKey` for targeted refresh
+- `itemTemplateName` for card/list rendering
+
+### Props
+
+| Prop | Type | Required | Default | Notes |
+|---|---|---|---|---|
+| `config` | `ObjectSearchConfig` or JSON string | Yes | — | Must include class and display columns. |
+| `display` | `table` \| `cards` \| `list` | No | `table` | `cards`/`list` can use `itemTemplateName`. |
+| `itemTemplateName` | `string` | No | — | Per-row template for cards/list rendering. |
+| `editable` | `boolean` | No | `false` | Enables edit action and edit modal flow. |
+| `editTemplateName` | `string` | No | class default Update template | Edit modal template override. |
+| `allowCreate` | `boolean` | No | `false` | Enables add/create action. |
+| `createTemplateName` | `string` | No | class default Create template | Create modal template override. |
+| `createDefaults` | `Record<string,string>` or JSON string | No | — | Applied to new object before first render. |
+| `allowDelete` | `boolean` | No | `false` | Enables delete action with privilege checks. |
+| `documentSearchConfig` | `DocumentSearchDto` or JSON string | No | — | Enables per-row documents modal action. |
+| `queryKey` | `string` | No | `object-search-<className>` | Stable key for targeted refresh actions. |
+| `openCreatedObject` | `string` \| `boolean` | No | `false` | Open newly created object in new tab. |
+
+### ObjectSearchConfig shape
+
+```json
+{
+  "className": "Task",
+  "displayColumns": [
+    { "dottedName": "Name" },
+    { "dottedName": "Status", "label": "Current status" }
+  ],
+  "constraints": [
+    { "dottedName": "CaseRelation", "operator": "=", "value": "{{stock.objectid}}" }
+  ],
+  "sorting": [
+    { "dottedName": "Name", "direction": "asc" }
+  ]
+}
+```
+
+### Examples
+
+Editable list with create and targeted refresh:
+
+```html
+<ObjectSearch
+  queryKey="case-tasks"
+  config='{
+    "className":"Task",
+    "displayColumns":[{"dottedName":"Name"},{"dottedName":"Status"}],
+    "constraints":[{"dottedName":"CaseRelation","operator":"=","value":"{{stock.objectid}}"}]
+  }'
+  editable="true"
+  allowCreate="true"
+  allowDelete="true"
+  createDefaults='{"CaseRelation":"{{stock.objectid}}"}'
+/>
+```
+
+Row-specific document lookup using `${row.*}` variables:
+
+```html
+<ObjectSearch
+  queryKey="objects-with-docs"
+  config='{
+    "className":"Task",
+    "displayColumns":[{"dottedName":"Name"}]
+  }'
+  documentSearchConfig='{
+    "documentTypeIds":[116],
+    "filters":[
+      {"keywordTypeId":115,"operator":"Equal","value":"${row.stock.objectid}"}
+    ],
+    "maxResults":50
+  }'
+/>
+```
+
+## DocumentSearch
+
+Query and render documents from a document search configuration with optional upload support.
+
+### Props
+
+| Prop | Type | Required | Default | Notes |
+|---|---|---|---|---|
+| `config` | `DocumentSearchDto` or JSON string | Yes | — | Main query contract for documents. |
+| `display` | `table` \| `cards` \| `list` | No | `table` | Rendering style. |
+| `viewable` | `boolean` | No | `true` | Enables open/view behavior. |
+| `queryKey` | `string` | No | auto-generated | Use stable key for `refreshDocuments:<key>`. |
+| `showHeader` | `boolean` | No | `true` | Result count and refresh controls. |
+| `title` | `string` | No | component default | Header title. |
+| `allowUpload` | `boolean` | No | `false` | Enables upload entry point. |
+| `createDefaults` | `DocumentUploadDefaults` or JSON string | No | — | Prefills upload type and keywords. |
+| `className` | `string` | No | — | Styling hook. |
+
+### Common enum values for configs
+
+| Enum | Values |
+|---|---|
+| `FilterOperator` | `Equal`, `NotEqual`, `LessThan`, `LessThanEqual`, `GreaterThan`, `GreaterThanEqual`, `Contains`, `StartsWith`, `EndsWith`, `IsNull`, `IsNotNull` |
+| `SortDirection` | `Ascending`, `Descending` |
+| `StandardColumn` | `DocumentId`, `DocumentName`, `DocumentTypeId`, `DocumentTypeName`, `DocumentTypeGroupId`, `DocumentTypeGroupName`, `DocumentDate`, `StoredDate`, `CreatedByUserId`, `CreatedByUsername`, `FileExtension`, `FileTypeName`, `MimeType`, `CurrentRevisionNumber` |
+| `DateFilterPreset` | `Today`, `Yesterday`, `ThisWeek`, `LastWeek`, `CurrentMonth`, `LastMonth`, `ThisYear`, `LastYear` |
+
+### Examples
+
+Baseline document search:
+
+```html
+<DocumentSearch
+  queryKey="case-documents"
+  config='{
+    "documentTypeIds":[116],
+    "filters":[
+      {"keywordTypeId":115,"operator":"Equal","value":"{{stock.objectid}}"}
+    ],
+    "maxResults":50
+  }'
+/>
+```
+
+Upload flow with defaults:
+
+```html
+<DocumentSearch
+  queryKey="case-documents"
+  config='{
+    "documentTypeIds":[116],
+    "filters":[
+      {"keywordTypeId":115,"operator":"Equal","value":"{{stock.objectid}}"}
+    ]
+  }'
+  allowUpload="true"
+  createDefaults='{
+    "documentTypeId":"116",
+    "keywords":[
+      {"keywordTypeId":"115","value":"{{stock.objectid}}"},
+      {"keywordTypeId":"320","value":"{{CaseNumber}}"}
+    ]
+  }'
+/>
+```
+
+## CreateObjectButton
+
+Open a create modal for a class and optionally run post-create actions.
+
+### Props
+
+| Prop | Type | Required | Default | Notes |
+|---|---|---|---|---|
+| `className` | `string` | Yes | — | Class to create. |
+| `templateName` | `string` | No | class default Create template | Create template override. |
+| `defaults` | `Record<string,string>` or JSON string | No | — | Initial create values. |
+| `label` | `string` | No | component default | Button text. |
+| `variant` | `primary` \| `secondary` \| `outline` \| `ghost` | No | `primary` | Button styling. |
+| `onCreated` | `string` | No | — | Action chain after successful create. |
+| `openCreatedObject` | `string` \| `boolean` | No | `false` | Open created object in new tab. |
+| `buttonClassName` | `string` | No | — | Styling hook. |
+
+### Example
+
+Create with refresh and local update:
+
+```html
+<CreateObjectButton
+  className="Task"
+  defaults='{"CaseRelation":"{{stock.objectid}}","Status":"Open"}'
+  onCreated='refresh:case-tasks | setValue:{"attributeName":"HasTasks","value":"true"}'
+  label="Add task"
+/>
+```
+
+## SaveButton
+
+Save dirty objects within a controlled scope with before/after hooks for validation and automation.
+
+### Props
+
+| Prop | Type | Required | Default | Notes |
+|---|---|---|---|---|
+| `scope` | `primary` \| `all` | No | `primary` | Save scope when `objectKey` is not supplied. |
+| `objectKey` | `string` | No | — | Target a specific object in store. |
+| `label` | `string` | No | component default | Button text. |
+| `variant` | `primary` \| `secondary` \| `outline` \| `ghost` | No | `primary` | Button styling. |
+| `requireDirty` | `boolean` | No | `true` | Set `false` to allow hook-only save triggers. |
+| `onBeforeSave` | `string` | No | — | Executes before save API call. |
+| `onAfterSave` | `string` | No | — | Executes after successful save API call. |
+| `className` | `string` | No | — | Styling hook. |
+
+### Save hook runtime variables
+
+- `${changedFields}` — array with utilities like `.includes("Field")`, `.length`, `.join(", ")`
+- `${oldValues.AttributeName}`
+- `${newValues.AttributeName}`
+
+### Examples
+
+Save-time validation gate:
+
+```html
+<SaveButton
+  scope="primary"
+  onBeforeSave='throwError:{"message":"Notes are required when closing"} when ${newValues.Status} == "Closed" and ${newValues.Notes} == ""'
+/>
+```
+
+Normalize values before save and refresh after save:
+
+```html
+<SaveButton
+  scope="primary"
+  onBeforeSave='setValue:{"attributeName":"SubmittedBy","value":"{{user.username}}"}'
+  onAfterSave='refresh:case-tasks | refreshDocuments:case-documents'
+  label="Save changes"
+/>
+```
+
+## ScriptButton
+
+Run a script directly from the UI with input mapping and result-driven follow-up actions.
+
+### Props
+
+| Prop | Type | Required | Default | Notes |
+|---|---|---|---|---|
+| `script` | `string` | Yes | — | Script slug. |
+| `inputs` | `object` or JSON string | No | `{}` | Supports `{{...}}` and `${...}` variable forms. |
+| `label` | `string` | No | component default | Button text. |
+| `variant` | `primary` \| `secondary` \| `outline` \| `ghost` | No | `primary` | Button styling. |
+| `onSuccess` | `string` | No | — | Action chain with `${scriptResult...}` support. |
+| `onError` | `string` | No | — | Action chain with `${scriptError}` support. |
+| `disabled` | `boolean` | No | `false` | Disable button execution. |
+| `className` | `string` | No | — | Styling hook. |
+
+### Example
+
+Script output projected to field:
+
+```html
+<ScriptButton
+  script="generate-document"
+  inputs='{"object_id":"{{stock.objectid}}","template":"${_TemplateName}"}'
+  onSuccess='setValue:{"attributeName":"GeneratedDocumentId","value":"${scriptResult.data.document_id}"} | refreshDocuments:case-documents'
+  onError='throwError:{"message":"Document generation failed"}'
+  label="Generate document"
+/>
+```
+
+## Internal support components
+
+These components are used internally by the Caseflow runtime. They are **not available as template tags** but are important for understanding the system.
+
+<AccordionGroup>
+  <Accordion title="ObjectModal">
+    Modal shell for template-driven create/edit operations. Used by `ObjectSearch` and `CreateObjectButton`.
+
+    - Create mode initializes a new in-memory object state and can apply defaults
+    - Edit mode binds to an existing object key
+    - Resolves and renders the chosen template (Create or Update)
+    - Handles save mutation and callback orchestration (`onCreated`, `onSaved`)
+    - Can open created object in a new tab
+    - Invalidates related query keys after save so dependent UI refreshes
+    - If closed before first save, unsaved temporary state is cleaned up
+    - If no template exists, a clear fallback message is shown
+  </Accordion>
+
+  <Accordion title="DocumentsModal">
+    Modal wrapper around `DocumentSearch` with resolved config. Used by `ObjectSearch` row actions for "view related documents".
+
+    - Receives already-resolved configuration from parent (including row-variable substitutions)
+    - Shows loading state while configuration is being prepared
+    - Renders `DocumentSearch` in table mode with header enabled
+  </Accordion>
+
+  <Accordion title="DocumentPreview">
+    File preview renderer with revision/rendition selection and live refresh. Used by `RelatedDocument` preview modes.
+
+    - Fetches revisions and renditions for a document
+    - Picks latest revision and default rendition for preview
+    - Subscribes to document revision events and refreshes automatically
+    - Returns structured loading, empty, and error states
+  </Accordion>
+
+  <Accordion title="ItemTemplateRenderer">
+    Renders one search result item using a named Caseflow template for cards/list displays. Used by `ObjectSearch` when `display="cards"` or `display="list"`.
+
+    - Creates an isolated object provider per item (no row-to-row state bleed)
+    - Fetches the named template for the row's class in update context
+    - Builds item scope with regular attributes, stock attributes, user context, and alias scopes
+  </Accordion>
+
+  <Accordion title="ObjectHistoryDialog">
+    Shows object audit details in a dialog with two data views. Used by `ObjectSearch` row action "View history".
+
+    - **Attribute Changes** tab — flattened transaction/attribute change rows
+    - **Event Log** tab — event timeline with translated event types
+    - Loads history only when dialog is open
+    - Formats UTC timestamps for readable presentation
+  </Accordion>
+</AccordionGroup>
+
+### Complete component inventory
+
+| Component | Template tag | Primary purpose |
+|---|---|---|
+| `EditableField` | Yes | Edit one attribute with type-aware editor |
+| `RelatedObject` | Yes | Resolve and render a related object |
+| `RelatedDocument` | Yes | Render document attribute with preview |
+| `RelationPicker` | Yes | Select or create relation targets |
+| `ObjectSearch` | Yes | Execute object searches with row actions |
+| `DocumentSearch` | Yes | Execute document searches with optional upload |
+| `CreateObjectButton` | Yes | Launch create-object modal |
+| `SaveButton` | Yes | Save current or all objects |
+| `ScriptButton` | Yes | Run a script on-demand |
+| `ObjectModal` | No | Modal shell for create/edit operations |
+| `DocumentsModal` | No | Modal wrapper for document search |
+| `DocumentPreview` | No | File preview with revision support |
+| `ItemTemplateRenderer` | No | Render one search result via template |
+| `ObjectHistoryDialog` | No | Object audit and history dialog |
