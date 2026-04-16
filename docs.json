@@ -22,7 +22,8 @@
           {
             "group": "AI search",
             "pages": [
-              "ai-search/introduction"
+              "ai-search/introduction",
+              "ai-search/llm-reranker-and-rewrite"
             ]
           },
           {

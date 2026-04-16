@@ -4,6 +4,10 @@ description: "Learn how Nobly AI Search works, how results are ranked and scored
 icon: "magnifying-glass"
 ---
 
+<Note>
+  AI Search is under active development. Results may vary in accuracy and completeness, and features or UI labels can change between releases.
+</Note>
+
 ## Overview
 
 Nobly AI Search combines two fundamentally different search technologies to find documents:
@@ -12,132 +16,91 @@ Nobly AI Search combines two fundamentally different search technologies to find
 
 - **Vector/Semantic Search:** AI-powered search that understands the *meaning* behind your query. Even if a document doesn't contain the exact words you typed, it can be found if it covers the same concept. For example, searching "medical expenses" could find documents about "health insurance claims" or "hospital invoices."
 
-These two technologies are combined using a ranking fusion algorithm to give you the most relevant results.
+These are combined with Reciprocal Rank Fusion (RRF), and can be further refined by two optional LLM stages: query rewrite before search and result reranking after search. See [LLM reranker and query rewrite](/ai-search/llm-reranker-and-rewrite) for details.
 
-## Search modes
+## Search config
 
-AI Search offers four search modes, selectable from the settings panel (gear icon):
+AI Search does not use named modes. Instead, the **Search config** section of the settings panel exposes three independent toggles that together determine how a query is processed.
 
-### Auto (Default)
+### Auto weights
 
-The system automatically picks the best search strategy based on what you typed. This is the recommended mode for most users. See the [Auto mode](#auto-mode---intelligent-query-detection) section for details on how it decides.
+| Setting | Default |
+|---|---|
+| Auto weights | On |
 
-### Text / Keyword
+When on, the server automatically picks the BM25 vs semantic weight split for each query. When off, two sliders appear and you set the weights yourself — they always sum to 100%, step in 5% increments, and default to **70% BM25 / 30% Semantic**.
 
-Pure text-based search using BM25 ranking. The system looks for exact term matches across document content, keywords, and metadata.
+Turning Auto weights off also disables **LLM rewrite**, because rewriting is only applied when the server is free to choose weights.
 
-**Weights:** 100% keyword search, 0% semantic search, no ColBERT reranking.
+### LLM rewrite
 
-**Best for:**
-- Known document IDs or reference numbers (e.g., "INV-2024-0847")
-- Specific names or codes
-- When you know exactly what term should appear in the document
-
-### Hybrid
-
-Combines keyword search and semantic search to balance exact matches with conceptual relevance.
-
-**Weights:** 70% keyword search, 30% semantic search, no ColBERT reranking.
-
-**Best for:**
-- Short queries mixing terms with general language (e.g., "Hansen policy")
-- When you want exact matches but also conceptually related results
-- Queries containing numbers mixed with descriptive words
-
-### Semantic
-
-Full meaning-based search with advanced reranking. The system generates AI embeddings of your query and compares them against document embeddings to find conceptually similar content. Includes ColBERT token-level reranking for the most precise results.
-
-**Weights:** 50% keyword search, 50% semantic search, ColBERT reranking enabled.
-
-**Best for:**
-- Natural language questions (e.g., "documents about pension changes for early retirement")
-- When you're not sure what exact terms appear in the document
-- Exploratory searching across a broad topic area
-
-## Auto mode - Intelligent query detection
-
-When set to Auto (the default), the system analyzes your query to pick the best strategy:
-
-| Query pattern | Detected mode | Example |
+| Setting | Default | Requires |
 |---|---|---|
-| All terms are codes, numbers, or IDs (digits, dashes, slashes, dots, colons) | **Keyword** | `2001701234`, `INV-2024-0847`, `12.34.56` |
-| Short query (1-2 words) | **Hybrid** | `Hansen policy`, `invoice` |
-| Contains a long number (4+ digits) mixed with text | **Hybrid** | `customer 847291` |
-| Longer natural language (3+ words, not all codes) | **Semantic** | `find all pension documents from 2024` |
+| LLM rewrite | On | Auto weights |
 
-The resolved mode is returned in each search response, so you can see which strategy was actually used.
+An LLM rewrites your query into BM25-friendly and embedding-friendly variants before search runs. Hidden when the feature is disabled on the server. See [LLM query rewrite](/ai-search/llm-reranker-and-rewrite#llm-query-rewrite).
+
+### LLM rerank
+
+| Setting | Default |
+|---|---|
+| LLM rerank | On |
+
+An LLM reads the top candidate results and re-orders them by how well they actually answer your query, producing a 0–100 relevance score and a short reasoning text per result. Hidden when the feature is disabled on the server. See [LLM reranker](/ai-search/llm-reranker-and-rewrite#llm-reranker).
 
 ## How results are ranked
 
-The ranking process uses multiple stages depending on the search mode:
+Each search passes through a pipeline. The stages that actually run depend on your Search config and server availability.
 
-### Stage 1: BM25 Keyword Ranking
+### Stage 1: Query rewrite (optional)
+
+If **LLM rewrite** is on, the query is rewritten into BM25 and embedding variants before retrieval. The original query is always included alongside the rewritten forms.
+
+### Stage 2: BM25 keyword ranking
 
 A full-text search ranks documents by how well they match your query terms. This considers:
 - Term frequency (how often your search terms appear)
 - Document length (shorter documents with the same matches score higher)
 - Term rarity (rarer terms contribute more to the score)
 
-Results from BM25 are ranked 1st, 2nd, 3rd, etc.
+### Stage 3: Vector similarity ranking
 
-### Stage 2: Vector Similarity Ranking (Hybrid/Semantic modes only)
+Your query is converted into a high-dimensional vector and compared against pre-computed vectors for every indexed document chunk. Documents whose vectors are closest to your query vector rank highest. Measured as **cosine similarity** (0.0 = completely unrelated, 1.0 = identical meaning).
 
-Your query is converted into a mathematical vector (a high-dimensional numerical representation of its meaning) and compared against pre-computed vectors for every indexed document chunk. Documents whose vectors are closest to your query vector rank highest.
+### Stage 4: Reciprocal Rank Fusion (RRF)
 
-This is measured as **cosine similarity** (0.0 = completely unrelated, 1.0 = identical meaning).
+BM25 and vector rankings are combined into a single ordering using RRF, weighted by the BM25/semantic split chosen by Auto weights (or your manual sliders). RRF ensures neither ranking system fully dominates — a document ranked #100 in BM25 but #1 in vector still surfaces.
 
-Results from vector search are ranked 1st, 2nd, 3rd, etc. independently of BM25.
+### Stage 5: LLM reranker (optional)
 
-### Stage 3: Reciprocal Rank Fusion (RRF)
+If **LLM rerank** is on, the top RRF candidates are read by an LLM that scores each one against your query (0–100) and produces a short reasoning text. The LLM score replaces the RRF score as the displayed relevance score.
 
-When both BM25 and vector rankings exist, they are combined using Reciprocal Rank Fusion (RRF). This mathematical formula merges both ranked lists into a single ordering:
+### Summary
 
-- A document ranked **#1 in both** BM25 and vector gets the highest combined score
-- A document ranked **#100 in BM25 but #1 in vector** still ranks well — fusion ensures neither ranking system fully dominates
-- The weighting between BM25 and vector is controlled by the search mode (e.g., 70/30 in Hybrid, 50/50 in Semantic)
-
-### Stage 4: ColBERT Reranking (Semantic mode only)
-
-ColBERT is an advanced reranking step that provides more precise scoring than basic vector similarity. It works at the **token level** — instead of comparing your entire query as one vector, it compares each word individually against the document's words, then aggregates the best matches.
-
-This means ColBERT can distinguish subtle differences that dense vectors might miss. When ColBERT is active, its scores replace RRF as the primary ranking signal.
-
-### Summary of ranking by mode
-
-| Mode | Stage 1 | Stage 2 | Stage 3 | Stage 4 | Final ranking signal |
-|---|---|---|---|---|---|
-| Keyword | BM25 | - | - | - | BM25 rank |
-| Hybrid | BM25 | Vector | RRF fusion | - | RRF score |
-| Semantic | BM25 | Vector | RRF fusion | ColBERT | ColBERT score |
+| LLM stages on | Displayed score |
+|---|---|
+| Neither | RRF score |
+| Rewrite only | RRF score computed from rewritten queries |
+| Rerank only | LLM reranker score (0–100) |
+| Both | LLM reranker score applied to RRF-fused results from rewritten queries |
 
 ## Understanding the relevance score
 
-Each result displays a **relevance score from 0 to 100** shown as a percentage. This score is designed to give an intuitive sense of how well a result matches your query.
+Each result displays a **relevance score from 0 to 100**. The source depends on whether LLM rerank ran:
 
-### How the score is calculated
+- **With LLM rerank:** the score is the reranker's direct 0–100 estimate of how well the document answers your query.
+- **Without LLM rerank:** the score is derived from the RRF fusion, capped by semantic similarity so the top score reflects actual match strength rather than just position in the result list.
 
-1. **Normalization:** The top-scoring result's raw ranking signal (ColBERT score or RRF score) is treated as the reference point. All other results are scaled proportionally.
+Hovering the info icon next to the score shows:
 
-2. **Score cap:** An absolute quality anchor limits how high scores can go. This prevents misleading "100% match" scores when results are only loosely related.
+> The relevance score (0–100%) shows how well each result matches your search. It is capped by semantic similarity so the top score reflects actual match strength, not just ranking. Scores are relative to the best result in the current set — so the same document can have different scores depending on what else is returned.
 
-   - **In Semantic/Hybrid mode:** The cap is based on **cosine similarity** — the mathematical similarity between your query and the best result. If the best result has 0.85 cosine similarity, scores are capped at 85.
-   - **In Keyword mode:** The cap is estimated from **term overlap** — what percentage of your query terms were actually found in the results. Even 100% term overlap caps at ~95 (exact term matches don't guarantee perfect relevance).
+Important properties:
 
-### What the score means
-
-- **Scores are relative to the result set.** A score of 78 means "this result is 78% as relevant as the theoretical best match," not "we are 78% sure this is correct."
-- **The top result will always have the highest score**, but its absolute value depends on query quality. A strong match might show 92; a weaker query might top out at 55.
-- **Lower scores are not necessarily bad.** In keyword mode with partial term matches, the top result might score 60 — that's expected and can still be the right document.
-- **Scores always decrease** from the first result to the last. The ordering matches the underlying ranking signal.
-
-### Typical score ranges
-
-| Mode | Typical top score | Notes |
-|---|---|---|
-| Keyword | 30-80 | Depends on how many query terms matched |
-| Hybrid | 50-90 | Blended signal is usually stronger |
-| Semantic | 60-100 | Vector similarity + ColBERT produces the richest signal |
+- **Scores are relative to the result set.** The same document can show different scores depending on which other results were returned.
+- **The top result always has the highest score**, but its absolute value depends on query quality. A strong match might show 92; a weaker query might top out at 55.
+- **Lower scores are not necessarily bad.** A top score of 60 on a partial-term keyword query can still be the right document.
+- **Rerank-on and rerank-off scores are not directly comparable.** A 70 from LLM rerank and a 70 from RRF are measured differently.
 
 ## Match sources - Why did this result appear?
 
@@ -181,25 +144,38 @@ All of these are combined into a single searchable index, so a keyword search fo
 
 For **semantic/vector search**, the same composite content is used to generate document embeddings, so the AI model understands the full context of each document.
 
+## Search progress stages
+
+While a search runs, a progress indicator shows what the system is doing. The exact stages depend on your Search config and server features:
+
+- **Resolving search options…**
+- **Rewriting query…** (only with LLM rewrite)
+- **Building embeddings…**
+- **Searching…**
+- **The AI is reading the results and ranking them by relevance…** (only with LLM rerank)
+- **Finishing…**
+
+After results arrive, badges at the top of the result table show which LLM stages were actually applied for this query — this can differ from your toggle state if a server-side feature was unavailable.
+
 ## Search query tips
 
 ### For exact lookups (IDs, numbers, codes)
 
-Just type the value directly. Auto mode will detect it as a code and use fast keyword-only search.
+Just type the value directly. With Auto weights on, the server picks an appropriate BM25/semantic split for code-like queries.
 
 > `2001701234`
 > `INV-2024-0847`
 
 ### For finding specific documents
 
-Use a few distinctive terms. Short queries trigger Hybrid mode, which balances exact and semantic matching.
+Use a few distinctive terms — Auto weights will balance exact and semantic matching.
 
 > `Hansen pension`
 > `insurance policy 2024`
 
 ### For exploratory / conceptual search
 
-Describe what you're looking for in natural language. Longer queries trigger full Semantic mode with ColBERT reranking.
+Describe what you're looking for in natural language. LLM rerank sharpens the ordering further when enabled.
 
 > `documents about employee health benefits changes`
 > `customer complaints regarding delayed payments`
@@ -207,9 +183,9 @@ Describe what you're looking for in natural language. Longer queries trigger ful
 ### General advice
 
 - **Be specific when you can.** More distinctive terms lead to better BM25 matches.
-- **Use natural language for broad topics.** The semantic engine excels at understanding intent.
-- **Don't worry about exact wording.** Semantic search finds documents based on meaning, not just keywords.
-- **Try different modes** if Auto doesn't give the results you expect. Switching to Keyword mode can help when you know exact terms exist; switching to Semantic can help when exploring.
+- **Use natural language for broad topics.** The semantic engine and the LLM reranker excel at understanding intent.
+- **Don't worry about exact wording.** LLM rewrite expands your query to cover variations.
+- **Try turning Auto weights off** if the default split doesn't surface what you expect — the sliders give you direct control.
 
 ## Search operators and syntax
 
@@ -223,49 +199,57 @@ Currently, AI Search does **not** support advanced search operators. The followi
 | `-term` (exclusion) | Not supported | Treated as a literal character |
 | `field:value` | Not supported | Treated as regular text |
 
-Your query text is used as-is for both the keyword and semantic search paths.
+Your query text is used as-is, or — with LLM rewrite on — passed through an LLM before being sent to BM25 and semantic search. Because the search uses both BM25 and semantic matching:
 
-**However**, because the search uses both BM25 and semantic matching:
-- BM25 naturally handles multi-word queries by matching individual terms (each word is searched independently)
+- BM25 naturally handles multi-word queries by matching individual terms
 - Semantic search understands phrasing and context, so typing `health insurance claims` will find documents about that topic even without phrase operators
 - The BM25 tokenizer may apply stemming at the database level, which provides some automatic fuzzy matching for word variations
 
 ## Advanced settings
 
-Clicking the gear icon next to the search bar opens the settings panel with these options:
+The settings panel next to the search bar is organized into collapsible sections.
 
-### Search mode
+### Search config
 
-Select between Auto, Text/Keyword, Hybrid, or Semantic. See [Search modes](#search-modes) for details.
+- **Auto weights** — on by default. When off, set **Text weight** and **Semantic weight** sliders manually (0–100%, step 5%, always summing to 100%).
+- **LLM rewrite** — on by default. Requires Auto weights. Hidden when disabled on the server.
+- **LLM rerank** — on by default. Hidden when disabled on the server.
 
-### Visible columns
+See [LLM reranker and query rewrite](/ai-search/llm-reranker-and-rewrite) for details.
 
-Toggle which columns appear in the results table:
+### Document types
+
+Restrict the search to one or more document types or document type groups. When empty, all accessible document types are searched.
+
+### Date range
+
+Restrict results to documents with a document date between **From** and **To**. Either endpoint is optional.
+
+### Columns
+
+Toggle which columns appear in the results table and drag to reorder. Available columns:
+
 - Document ID
-- Document Name
-- Document Type
-- Created By
-- File Extension
+- Document name
+- Document type
+- Document date
+- Created by
+- File extension
+- Reasoning (populated by LLM rerank)
 
-### Keywords
-
-Add Nobly Insight keyword types as additional columns in the results table. This lets you see keyword values directly in the search results without opening each document. Click "Add keyword..." to select from available keyword types.
-
-### Column order
-
-Drag and drop to reorder how columns appear in the results table. The score column always remains first.
+You can also add Nobly Insight keyword types as additional columns to see keyword values directly in results without opening each document. The score column always remains first and cannot be toggled off or reordered.
 
 ### Max results
 
-Control how many results are returned: 10, 20, 50, 100, 200, 500, or 1000. Higher limits take longer to process, especially in Semantic mode where each result requires embedding computation. The server may enforce a maximum cap.
+Control how many results are returned: 10, 20, 50, 100, 200, 500, or 1000. Default is **50**. Higher limits take longer to process — LLM rerank time scales roughly with this number. The server may enforce a maximum cap.
 
 ## Understanding different score ranges
 
-Here are practical examples of what different score ranges typically mean:
+Here are practical examples of what different score ranges typically mean. Remember that scores differ meaningfully depending on whether LLM rerank ran — treat these as rules of thumb rather than fixed thresholds.
 
 ### High scores (75-100)
 
-Strong match. The document is highly relevant to your query. In semantic mode, this indicates high conceptual similarity. In keyword mode, this means most or all of your search terms were found.
+Strong match. The document is highly relevant to your query.
 
 ### Medium scores (45-74)
 
@@ -300,29 +284,25 @@ If a user reports "missing" documents in search results, verify that:
 
 <AccordionGroup>
   <Accordion title="Why do I get different results when I rephrase my query?">
-    Different words trigger different search strategies. In Semantic mode, the AI embedding of "medical bills" is different from "hospital invoices" — even though they're related, the vector distances to various documents will differ. BM25 results also change because different terms match different documents. This is normal and expected.
+    Different words produce different embeddings and different BM25 matches. With **LLM rewrite** on, the rewritten variants further depend on the original phrasing. This is normal and expected.
   </Accordion>
 
   <Accordion title="Why is the top score only 55%?">
-    The relevance score is anchored by an absolute quality signal. A top score of 55% means the best match has moderate (not high) similarity to your query. This is common for keyword-only searches with partial term overlap, or for semantic searches on broad/vague queries. The results may still be exactly what you need — the score indicates match confidence, not document quality.
+    The relevance score reflects match quality, not ranking position. A top of 55% means the best match has moderate similarity to your query. This is common for partial keyword overlap or broad queries. The results may still be exactly what you need.
   </Accordion>
 
   <Accordion title="Can I search for documents by date?">
-    Date searching is not currently part of the AI search text query. If dates appear in document keywords, they can be matched as text (e.g., searching "2024" will match keyword values containing "2024"). For structured date filtering, use the standard document search mode.
+    Yes — use the **Date range** section of the settings panel to filter by document date. Dates inside the free-text query itself are treated as text and matched against keyword values.
   </Accordion>
 
   <Accordion title="What's the difference between AI Search and standard Document Search?">
     **Standard Document Search** uses structured filters: you select document types, date ranges, and keyword values from predefined fields. It queries the Nobly Insight database directly with exact criteria.
 
-    **AI Search** uses free-text input against a separate search index (PostgreSQL with BM25 + vector embeddings). It can find documents by meaning, not just exact field values. However, it does not support structured filters like date ranges or document type restrictions — it searches across everything you have access to.
+    **AI Search** uses free-text input against a separate search index (PostgreSQL with BM25 + vector embeddings), optionally enhanced by LLM rewrite and LLM rerank. It can find documents by meaning, not just exact field values. AI Search supports document-type and date-range filtering via its settings panel, but does not support keyword-value filters.
   </Accordion>
 
   <Accordion title="Why doesn't wildcard search work?">
-    The search system does not parse special characters as operators. The `*` character and quote marks are treated as literal text. Instead of wildcards, use the Semantic or Hybrid mode — the AI embedding naturally handles variations and related terms without needing explicit wildcards.
-  </Accordion>
-
-  <Accordion title="What happens when I select Semantic mode but type a document ID?">
-    The system will still run semantic search, but since a document ID like "2001701234" has no semantic meaning, the vector search component will be less useful. The BM25 component (which still runs at 50% weight in Semantic mode) will find the document by exact match. For ID lookups, Auto or Keyword mode is more efficient.
+    The search system does not parse special characters as operators. The `*` character and quote marks are treated as literal text. Instead of wildcards, rely on the semantic component — the AI embedding naturally handles variations and related terms without needing explicit wildcards.
   </Accordion>
 
   <Accordion title="How current is the search index?">

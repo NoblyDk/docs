@@ -1,0 +1,124 @@
+---
+title: "LLM reranker and query rewrite"
+description: "How the LLM reranker and LLM query rewrite improve AI Search results, how to use them, and when to turn them off."
+icon: "sparkles"
+---
+
+## Overview
+
+AI Search can call a language model at two points in the search pipeline:
+
+- **LLM query rewrite** — before search, an LLM rewrites your query into forms that work better for BM25 and embedding retrieval.
+- **LLM reranker** — after search, an LLM reads the top candidate results and re-orders them by how well they actually answer your query.
+
+Both features are controlled independently from the **Search config** section of the AI Search settings. Either or both can be disabled for lower latency. Your system administrator may disable either feature server-side, in which case the toggle is hidden.
+
+## LLM query rewrite
+
+### What it does
+
+Your original query is passed to an LLM that produces:
+
+- A BM25-friendly version (closer to how documents are written)
+- An embedding-friendly version for semantic search
+
+All versions, including the original query, are used in parallel so rewriting rarely hurts recall and usually improves it.
+
+### When it runs
+
+Rewrite runs only when **Auto weights** is enabled. With manual weights you have committed to a specific BM25/semantic mix, so rewriting is disabled to keep results deterministic.
+
+### Settings
+
+| Setting | Default | Notes |
+|---|---|---|
+| LLM rewrite | On | Toggled in **Search config** |
+| Requires Auto weights | Yes | Toggle is disabled while Auto weights is off |
+| Server availability | Controlled by admin | Toggle is hidden when unavailable |
+
+During a search, the progress indicator shows **Rewriting query…** while this runs. After results arrive, a badge on the results header indicates whether rewrite was actually applied:
+
+- *On:* "The search query was rewritten for BM25 and embedding."
+- *Off:* "LLM query rewrite was not applied."
+
+### When to turn it off
+
+- You need lowest-possible latency for a keyword lookup.
+- You are debugging why a particular result did or did not match and want deterministic text matching.
+
+## LLM reranker
+
+### What it does
+
+After the hybrid BM25 + vector search produces the top candidate documents, the LLM reranker reads each candidate and scores how well it actually answers your query. Results are then re-ordered by this score.
+
+The reranker also produces a short **reasoning** text for each result explaining why it was ranked where it was.
+
+### Outputs
+
+| Output | Where you see it |
+|---|---|
+| LLM relevance score (0–100) | Shown in the score column. Takes precedence over the RRF score when present. |
+| Reasoning text | Displayed in the optional **Reasoning** column — enable it from the Columns section of settings. |
+| Applied/not-applied badge | Shown on the results header. |
+
+### Settings
+
+| Setting | Default | Notes |
+|---|---|---|
+| LLM rerank | On | Toggled in **Search config** |
+| Server availability | Controlled by admin | Toggle is hidden when unavailable |
+
+During a search, the progress indicator shows **The AI is reading the results and ranking them by relevance…** After results arrive, a badge indicates whether rerank was applied:
+
+- *On:* "LLM rerank was applied to these results."
+- *Off:* "LLM rerank was not applied (disabled in settings or unavailable on the server)."
+
+### Interaction with the relevance score
+
+When LLM rerank is on, the score you see is the LLM's 0–100 relevance score. When it is off, the score falls back to the Reciprocal Rank Fusion (RRF) score from the hybrid retrieval stage. The two are **not directly comparable** — a 70 with reranker and a 70 without reranker are measured differently.
+
+### When to turn it off
+
+- You need fastest-possible results and can trade some result quality.
+- You want to inspect the raw hybrid retrieval ordering.
+- Your query is an exact code/ID lookup where reranking adds little value.
+
+## Seeing what was applied
+
+Every AI search response reports which LLM stages actually ran. The badges above the result table reflect the *actual* behavior, not just the toggle state — a server-side issue can cause a stage to be skipped even when you have it turned on.
+
+## Latency considerations
+
+Both features add round-trips to the LLM service:
+
+| Stage | Approximate impact |
+|---|---|
+| Query rewrite | Small — a single short LLM call before search begins. |
+| Rerank | Larger — scales with how many candidates are reranked. Higher **Max results** settings increase rerank time. |
+
+If search feels slow, try:
+
+1. Turning off LLM rerank first (biggest win).
+2. Lowering **Max results**.
+3. Turning off LLM rewrite if you also don't need it.
+
+## Frequently asked questions
+
+<AccordionGroup>
+  <Accordion title="Why is my toggle greyed out?">
+    The **LLM rewrite** toggle is disabled whenever **Auto weights** is off. Turn Auto weights back on to re-enable it. If a toggle is hidden entirely rather than greyed out, the feature is disabled server-side.
+  </Accordion>
+
+  <Accordion title="Why does the results badge say rerank was not applied even though I have it on?">
+    The LLM service may be temporarily unavailable, rate-limited, or disabled for your tenant. The response still includes results — they are ordered by the RRF fallback score.
+  </Accordion>
+
+  <Accordion title="Can I see what the rewrite did to my query?">
+    Not directly in the UI today. The rewrite happens server-side and the rewritten query is not surfaced back. If results differ significantly from what you expected, try turning LLM rewrite off to see the base retrieval behavior.
+  </Accordion>
+
+  <Accordion title="Does the reasoning column count towards the score?">
+    No. The reasoning is a natural-language explanation of the score, not an input to it. It is there for transparency and debugging.
+  </Accordion>
+</AccordionGroup>
