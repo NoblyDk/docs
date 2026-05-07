@@ -20,6 +20,17 @@
             ]
           },
           {
+            "group": "Features",
+            "pages": [
+              "features/introduction",
+              "features/document-management",
+              "features/search",
+              "features/case-management",
+              "features/extensibility",
+              "features/administration"
+            ]
+          },
+          {
             "group": "How we use AI",
             "pages": [
               "ai/introduction",

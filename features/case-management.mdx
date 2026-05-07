@@ -1,0 +1,65 @@
+---
+title: "Case management & workflow"
+description: "Configurable business objects, form-based UI, and workflow automation for the work your business actually does."
+icon: "table-columns"
+---
+
+## Overview
+
+Beyond simple documents, Nobly Insight models the real-world objects your business cares about — customers, loans, claims, applications, contracts — and puts them at users' fingertips. Cases move through configurable workflows with auditable steps, deadlines, and notifications.
+
+## Configurable business objects
+
+- Define your own **object types** and their attributes (text, numbers, dates, dropdowns, references)
+- **Link** documents, notes, and related cases to any object
+- Search and filter across business objects with rich, multi-criteria queries (And/Or logic, comparison operators, text matching, ranges, null checks)
+
+## Form-based UI
+
+- A flexible **template engine** renders business forms in the browser with reusable building blocks: editable fields, relation pickers, action buttons, tabs, grids, and more
+- Templates are configurable per object type — your administrators control layouts without code changes
+- **Inline create and edit** modes with validation and unsaved-changes protection
+- **Scoped editing** so a single screen can show and edit multiple related objects at once
+
+## Actions and automation in forms
+
+| Capability | What it does |
+|---|---|
+| **Action buttons** | Trigger any combination of: setting values, opening dialogs, generating documents, sending e-mails, calling external services, and running custom logic |
+| **Runtime variables** | Use the current user, current date/time, and object context inside actions |
+| **Save hooks** | Run validation or extra logic when objects are saved |
+| **Custom scripts** | Power buttons and hooks with sandboxed Python — see [Extensibility](/features/extensibility) |
+
+## Attribute-level security
+
+Restrict who can see or modify **individual attributes** on a business object — not just which records they can open. This lets you, for example, expose a customer record to an entire team while keeping a sensitive field visible to a smaller group.
+
+## Workflow and process automation
+
+Move work through your organisation with predictable, auditable processes.
+
+- Documents and business objects flow through configurable **workflow queues**
+- Tasks are assigned to **users, groups, or roles** with priorities and deadlines
+- **Real-time notifications** when items arrive, change state, or require attention
+- **Event hooks** fire on system events (for example: a document is created or a case status changes) to trigger downstream automation
+- Full **audit trail** of every step
+
+## Where to read next
+
+<Card
+  title="Caseflow introduction"
+  icon="table-columns"
+  href="/caseflow/introduction"
+  horizontal
+>
+  Detailed reference for Caseflow templates, components, actions, and scripting.
+</Card>
+
+<Card
+  title="Extensibility"
+  icon="code"
+  href="/features/extensibility"
+  horizontal
+>
+  How custom logic, integrations, and the script engine extend case behaviour.
+</Card>

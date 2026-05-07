@@ -1,0 +1,86 @@
+---
+title: "Administration & governance"
+description: "User and access management, audit, observability, security, and deployment options for Nobly Insight."
+icon: "gear"
+---
+
+## Overview
+
+Tools for IT and information governance teams to keep Nobly Insight safe, auditable, and well-run. Designed for the demands of regulated industries — finance, insurance, pension, and the public sector.
+
+## User and access management
+
+- User and group administration through a modern **admin UI**
+- **Two-tier permission model**: per-document-type rights (view, modify, delete, print, mail, and so on) layered with security keywords for record-level access
+- Permissions can be granted by **role, organisational unit, or individual user**
+- **Single sign-on** and just-in-time user provisioning from your identity provider (Microsoft Entra ID, Azure AD, or other OpenID Connect / OAuth 2.0 providers)
+- **Attribute-level security** restricts visibility and editing of individual fields on business objects
+
+## Audit and activity logging
+
+| Layer | What is logged |
+|---|---|
+| **Configuration audit** | Every change to system configuration (document types, keyword definitions, user groups, settings) is logged with who, when, and what changed |
+| **Activity audit** | Every read, write, print, mail, and delete on a document is recorded against the user |
+| **Workflow audit** | Every workflow step a case passes through is recorded with timestamps and actors |
+| **Script audit** | Every custom-script run is recorded with caller, inputs, and result |
+
+Logs are searchable and designed to meet financial-sector and public-sector audit requirements.
+
+## Health and observability
+
+- **Real-time health checks** for every component
+- **Performance and usage metrics** for capacity planning
+- **Background job dashboard** for AI indexing, security sync, retention, and other long-running tasks
+
+## Multi-tenant isolation
+
+- The same code base serves multiple organisations
+- Each tenant's **data, configuration, and AI indexes are fully isolated**
+- **Per-customer configuration** means features can be enabled or tuned without redeploying
+- **Per-customer feature flags** allow new capabilities to be rolled out gradually and turned on or off per tenant
+
+## Security and compliance
+
+Nobly Insight is designed for highly regulated industries.
+
+- **Encryption at rest** for all stored content
+- **Encryption in transit** (HTTPS/TLS) for every API call and user session
+- **OpenID Connect / OAuth 2.0** for authentication and federation with corporate identity providers
+- Role-, document-type-, attribute-, and record-level access control with **security keywords**
+- **Comprehensive audit logging** of user actions and configuration changes
+- **GDPR-friendly**: redaction, retention, and data-subject access support
+- **Sandboxed customisation**: customer scripts cannot access the file system or break out of their execution boundary
+- **Secret management**: credentials for external system integrations are encrypted with strong, industry-standard encryption and never exposed to script authors
+- **AI privacy**: every AI feature runs on Nobly-owned infrastructure in the EU, on open-weight models, with no third-party AI subprocessors and no training on customer data — see [Data and privacy](/ai/data-and-privacy)
+
+## Deployment options
+
+| Option | Description |
+|---|---|
+| **Cloud-hosted** | Runs on managed cloud infrastructure with managed PostgreSQL and SQL databases, file storage, caching, and a managed event bus |
+| **Private cloud / on-premise** | Deployable in customer-managed environments or hybrid setups |
+| **Continuous delivery** | Customer environments (Dev, Test, QA, Production) are managed through automated release pipelines |
+| **Versioned APIs** | Backwards-compatible versioning so integrations keep working across releases |
+
+AI inference is always served from Nobly-owned servers in EU co-location facilities, regardless of where the rest of the platform is hosted. See [Infrastructure and models](/ai/infrastructure) for details.
+
+## Where to read next
+
+<Card
+  title="How we use AI"
+  icon="shield-check"
+  href="/ai/introduction"
+  horizontal
+>
+  AI principles, data and privacy, and infrastructure for procurement and compliance review.
+</Card>
+
+<Card
+  title="Extensibility"
+  icon="code"
+  href="/features/extensibility"
+  horizontal
+>
+  The script engine and REST API for extending and integrating Nobly Insight.
+</Card>

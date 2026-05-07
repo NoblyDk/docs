@@ -1,0 +1,73 @@
+---
+title: "Smart search"
+description: "Find the right document fast in Nobly Insight — structured keyword search, cascading datasets, and AI-powered natural-language search and chat."
+icon: "magnifying-glass"
+---
+
+## Overview
+
+Find the right document — fast — whether you know exactly what you're looking for or only have a vague idea. Nobly Insight combines traditional structured search with an AI-powered semantic layer, all governed by the same per-user permissions.
+
+## Structured search
+
+- Search across **hundreds of millions of documents** by keyword, date, document type, and combinations of metadata
+- **Cascading datasets**: dependent dropdowns (e.g. customer → contract → policy) for guided searches and entry forms
+- **Auto-fill keyword sets**: type a single value (such as a customer number) and the rest of the related metadata is filled in for you
+- **External datasets**: pull autofill data from external systems (CRM, ERP, master data) without copying it
+- **Saved searches** and personal/shared search folders
+
+## AI-powered search
+
+| Capability | What it does |
+|---|---|
+| **AI document search** | Ask in natural language ("show me the latest credit decisions for this customer") and the platform finds the most relevant documents |
+| **AI-generated search queries** | Convert a free-text question into a structured query you can refine and save |
+| **AI Chat** | A conversational interface that lets users ask follow-up questions and dig deeper without re-typing context |
+| **AI Summary** | Generate a concise summary of any document, or of a set of documents, in seconds |
+| **AI Data Extraction** | Extract structured data (e.g. fields from invoices, IDs, or forms) into searchable metadata |
+
+All AI search results respect each user's existing security — users only ever see results for documents they are permitted to access. AI processing runs on Nobly-owned infrastructure in the EU; see [How we use AI](/ai/introduction) for the full data and privacy model.
+
+## How retrieval works
+
+AI Search combines BM25 keyword ranking with vector-based semantic ranking, optionally enhanced by an LLM that rewrites the query before search and reranks results afterwards.
+
+For ranking details, scoring, advanced settings, and tips, see:
+
+<Card
+  title="AI Search introduction"
+  icon="magnifying-glass"
+  href="/ai-search/introduction"
+  horizontal
+>
+  How results are ranked and scored, what each toggle does, and how to get the best results.
+</Card>
+
+<Card
+  title="LLM reranker and query rewrite"
+  icon="sparkles"
+  href="/ai-search/llm-reranker-and-rewrite"
+  horizontal
+>
+  When the LLM rewrite and rerank stages run, what they output, and when to turn them off.
+</Card>
+
+## Where to read next
+
+<Card
+  title="Document management"
+  icon="folder-open"
+  href="/features/document-management"
+  horizontal
+>
+  How documents are captured, stored, edited, and governed before they reach search.
+</Card>
+
+<Card
+  title="How we use AI"
+  icon="shield-check"
+  href="/ai/introduction"
+  horizontal
+>
+  The principles behind every AI feature: open-weight models, Nobly-owned infrastructure, and no third-party AI subprocessors.
+</Card>

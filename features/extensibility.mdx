@@ -1,0 +1,66 @@
+---
+title: "Extensibility"
+description: "Extend Nobly Insight without forking it: a sandboxed Python script engine, event hooks, and a complete REST API."
+icon: "code"
+---
+
+## Overview
+
+Every customer is different. Nobly Insight is designed so administrators can extend behaviour without forking the platform or writing plug-ins that block upgrades. Two extension surfaces are available out of the box: a managed **script engine** for custom logic, and a complete **REST API** for system integrations.
+
+## The script engine
+
+A managed, sandboxed environment for safely running customer-defined Python scripts that extend the platform.
+
+| Property | What it gives you |
+|---|---|
+| **Versioned scripts** | Every change is a new version; publish, roll back, or pin specific versions |
+| **Automatic validation** | Syntax, contract, and safety checks run before a script can be published |
+| **Sandboxed execution** | Strict timeouts and memory limits — scripts cannot break out of their boundary |
+| **Encrypted secrets vault** | Scripts call external systems without exposing credentials to script authors |
+| **Full audit logging** | Every script run is logged with who triggered it and the result |
+
+### Where scripts plug in
+
+| Trigger | Use cases |
+|---|---|
+| **External autofill** | Look up customer or contract data from a CRM/ERP/master-data system when a user types in a metadata field |
+| **Form autofill** | When one field on a form changes, automatically calculate or look up the values of other fields |
+| **Form actions** | Power custom buttons — generate documents, post to external APIs, send e-mails, create related records |
+| **Event hooks** | React in the background when a document or case changes — feed downstream systems, run validations, send notifications |
+
+### Calling external systems safely
+
+Scripts can call any external HTTPS API (identity providers, CRM, ERP, SMS gateways, and so on) through a managed HTTP client with logging, timeouts, and request-size limits — all without exposing infrastructure credentials to script authors.
+
+## REST API
+
+The full platform is exposed as a versioned REST API so other applications can:
+
+- Upload, retrieve, update, and search **documents**
+- Read and write **business object** data
+- Trigger **workflow actions**
+- Manage **users, groups, and configuration**
+- Subscribe to **lifecycle events**
+
+OpenAPI specifications and interactive documentation are published with every release. Versioning is backwards-compatible so integrations keep working across releases.
+
+## Where to read next
+
+<Card
+  title="Case management & workflow"
+  icon="table-columns"
+  href="/features/case-management"
+  horizontal
+>
+  How forms, action buttons, and event hooks invoke custom scripts.
+</Card>
+
+<Card
+  title="Administration"
+  icon="gear"
+  href="/features/administration"
+  horizontal
+>
+  How custom scripts, secrets, and integrations fit into the wider audit and governance picture.
+</Card>
