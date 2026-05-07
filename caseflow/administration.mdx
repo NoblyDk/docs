@@ -23,15 +23,75 @@ Template administration supports:
 - Set or unset default template
 - Assign user groups
 - Assign precedence
-- Define template type — `Create`, `Update`, or `Preview Pane`
+- Define template type — `Create`, `Update`, `Preview Pane`, or `Portal`
 
 ### Governance rules
 
 - When user groups are assigned, precedence should be defined
 - Precedence conflicts are blocked and reported
 - Preview Pane templates are intended for read-focused search preview behavior
+- Portal templates are application-scoped, not class-scoped — see [Portal templates](/caseflow/portal-templates)
 - Use group + precedence for role-specific behavior
 - Keep a reliable default template as fallback
+
+## Attribute administration
+
+The **Attribute administration** page controls per-attribute behavior across Caseflow tables and editors. For each class, the administrator can set:
+
+| Setting | Effect |
+|---|---|
+| **Editable in bulk** | When on, the attribute appears in the [bulk edit](/caseflow/lists-and-search#bulk-edit) attribute picker. System attributes (object ID, created date, and so on) are always blocked from bulk edit regardless of this setting. |
+| **Filterable in tables** | When on, the attribute exposes a column filter button in the result table. Off-by-default attributes are still queryable through the [Search configurator](#search-configurator) but do not appear as column filters. |
+
+These settings drive the column filter UI and the bulk edit picker — flipping them takes effect on the next table render.
+
+## Search configurator
+
+The **Search configurator** is the admin UI for building and editing saved Caseflow searches. It is opened from the search list, the command bar, or the table header.
+
+### Sections
+
+The configurator is a tabbed dialog (resizable, ~1300 × 700 pixels by default) with the following sections:
+
+| Section | What you configure |
+|---|---|
+| **Class** | The base class of the search — drives which attributes are available downstream. |
+| **Display columns** | Which attributes appear as columns in the result table, in what order. |
+| **Filters** | The user-input filter controls shown above the table, mapped to constraints on the underlying query. Includes a **Filter input mapping** dialog for searches with variables. |
+| **Sorting** | Default ordering for the result set. |
+| **Max results** | Cap on the number of returned rows. |
+| **Configuration** | Cross-cutting options including the **Open related path** (see below) and other behavioral toggles. |
+
+### Modes
+
+| Mode | Behavior |
+|---|---|
+| **View mode** | Loaded with the parameters of the last executed search. No Save button. Useful for inspecting and refining a query. |
+| **Edit mode** | Loaded from a saved search. Save button is present. Changes overwrite the saved definition. |
+| **New search** | Resets all sections and lets you build from scratch. |
+
+### Open related path
+
+The **Open related path** option lets a saved search resolve a dotted attribute path (for example `Task.Owner`) on each result row to a related object ID, and open that related object instead of the search row's own object when the user double-clicks a row or the row is shown in the [search preview pane](/caseflow/introduction#user-surfaces).
+
+This is useful when a search returns rows from one class but the user's natural target is the related object — for example, searching tasks but wanting to land on the owning case.
+
+If any segment of the path resolves to an empty value on a given row, the row falls back to opening its own object.
+
+### Copy link
+
+The configurator includes a **Copy link** button that generates a shareable URL for the current search. The URL preserves filter inputs, so a recipient lands on the same configured view.
+
+## Class and attribute sync
+
+Caseflow class and attribute metadata is synchronised from the underlying source system. The **Class & attribute sync** page in administration triggers this sync and shows the result of the last run.
+
+| Action | Effect |
+|---|---|
+| **Run sync now** | Pulls the current class and attribute definitions from the source system into the Caseflow configuration. |
+| **Review log** | Shows what was added, changed, or removed in the most recent sync. |
+
+Run a sync after structural changes upstream — new classes, renamed attributes, or relation changes — so that templates, filters, and the [Search configurator](#search-configurator) reflect the live schema.
 
 ## Recommended implementation patterns
 

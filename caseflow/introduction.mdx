@@ -17,11 +17,11 @@ Caseflow is the object-data layer in Nobly Insight used for case and process-dri
 
 ## User surfaces
 
-Caseflow is exposed through four major user surfaces:
+Caseflow is exposed through six major user surfaces:
 
 <Columns cols={2}>
   <Card title="Landing page" icon="house">
-    Application selector, filter bar tree, search parameter controls, and result table with advanced interactions.
+    Application selector, filter bar tree, search parameter controls, and result table with advanced interactions including bulk edit, bulk delete, inline cell editing, and typed column filters.
   </Card>
   <Card title="Object page" icon="file-lines">
     Full object rendering through an Update template.
@@ -29,8 +29,14 @@ Caseflow is exposed through four major user surfaces:
   <Card title="Create page" icon="plus">
     Class-based object creation through a Create template.
   </Card>
+  <Card title="Portal page" icon="window-restore" href="/caseflow/portal-templates">
+    Application-level pages rendered from a [Portal template](/caseflow/portal-templates) — no primary object required. Supports deeplink prefill via URL query parameters.
+  </Card>
   <Card title="Search preview pane" icon="eye">
-    Uses a Preview Pane template when available. Falls back to a simple open-object action if not configured.
+    Uses a Preview Pane template when available. Auto-collapses when no Preview Pane template is configured for the class. Supports "open related" navigation that follows a dotted attribute path to a related object.
+  </Card>
+  <Card title="Command bar" icon="keyboard">
+    Quick-access palette opened with **Ctrl+K** (or **⌘+K**). Search saved searches, applications, and recent items; press **#** for direct object-ID lookup.
   </Card>
 </Columns>
 

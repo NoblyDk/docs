@@ -1,0 +1,184 @@
+---
+title: "Portal templates"
+description: "Application-level Caseflow pages with no backing object — for landing pages, dashboards, and search workbenches with deeplink prefill."
+icon: "window-restore"
+---
+
+## What is a Portal template?
+
+A **Portal template** is a Caseflow template that renders an entire application page without being bound to a single primary object. Unlike Create, Update, and Preview Pane templates — which all render *one specific object* — a Portal template runs in application context and is free to compose searches, transient inputs, and aliased related objects however it likes.
+
+Typical use cases:
+
+- **Landing dashboards** — a curated entry view for an application that lists open cases, recent documents, and key actions
+- **Search workbenches** — an input form that drives one or more `ObjectSearch` / `DocumentSearch` panels
+- **Deeplink targets** — pages a user lands on from an external link (e.g. an email) that pre-populates inputs from URL query parameters
+
+## How they differ from other template types
+
+| Aspect | Create / Update / Preview Pane | Portal |
+|---|---|---|
+| Bound to a single object | Yes | No |
+| Has a primary `{{stock.objectid}}` | Yes | No (`{{stock.*}}` is unavailable) |
+| Available scope | Object attributes, stock, user, aliases | User context, transient (`_*`) fields, aliases |
+| Persists changes via SaveButton | Yes | No — there is no primary object to save |
+| Selected by class + type | Yes | Selected by application + portal name |
+
+## Routing
+
+Portal templates are reached at the route `/caseflow/portal/{appId}/{portalName}`. The `portalName` matches the template's configured name in administration.
+
+## Available scope
+
+Inside a Portal template you can use:
+
+- **User context** — `{{user.id}}`, `{{user.username}}`, `{{user.realName}}`, `{{user.emailAddress}}`
+- **Transient fields** — any `_`-prefixed attribute name (see [Transient fields](/caseflow/state-and-persistence#transient-fields))
+- **Alias scopes** — registered via `<RelatedObject alias="...">` when a related object lookup makes sense in context
+- **Render-time globals** — `${today}`, `${now}` in actions
+
+`{{stock.*}}` and class-bound `{{AttributeName}}` references are not available, because there is no primary object.
+
+## Deeplink prefill via URL
+
+Portal templates accept URL query parameters that are written into the transient store **before** the template renders. This lets external systems (or your own bookmarks) prefill search inputs and trigger an immediate search.
+
+### Convention
+
+Use `_`-prefixed parameter names so the values land in transient fields and never accidentally persist:
+
+```text
+/caseflow/portal/12/customer-lookup?_cpr=1212121212&_year=2026
+```
+
+Inside the template, those values are then available:
+
+```html
+<EditableField attributeName="_cpr" label="CPR" type="text" />
+<EditableField attributeName="_year" label="Year" type="number" />
+
+<ObjectSearch
+  queryKey="customer-results"
+  config='{
+    "className": "Customer",
+    "displayColumns": [
+      {"dottedName": "Name"},
+      {"dottedName": "CPR"},
+      {"dottedName": "Year"}
+    ],
+    "constraints": [
+      {"dottedName": "CPR", "operator": "=", "value": "{{_cpr}}"},
+      {"dottedName": "Year", "operator": "=", "value": "{{_year}}"}
+    ]
+  }'
+  display="table"
+/>
+```
+
+When the user lands on the page from a deeplink, the inputs are populated and the `ObjectSearch` runs immediately because its constraints already resolve.
+
+### Cascading queries
+
+Because transient inputs feed `ObjectSearch` constraints through `{{...}}` interpolation, chained searches naturally cascade: change the input, the dependent search re-runs.
+
+```html
+<EditableField attributeName="_customerId" label="Customer ID" />
+
+<ObjectSearch
+  queryKey="customer-cases"
+  config='{
+    "className": "Case",
+    "constraints": [
+      {"dottedName": "CustomerRelation", "operator": "=", "value": "{{_customerId}}"}
+    ],
+    "displayColumns": [{"dottedName": "CaseId"}, {"dottedName": "Status"}]
+  }'
+  display="table"
+  editable="true"
+/>
+```
+
+## Suppressing the default submit
+
+Portal templates almost always need a custom submit experience — a dedicated "Search" button, a multi-action toolbar, or no submit at all. Add the directive at the top of the template:
+
+```html
+<!-- workview:hideDefaultSubmit -->
+```
+
+See [Template directives](/caseflow/templates#template-directives).
+
+## Example: search workbench portal
+
+```html
+<!-- workview:hideDefaultSubmit -->
+<div class="container mx-auto p-6 space-y-6">
+  <header class="space-y-1">
+    <h1 class="text-2xl font-semibold">Customer lookup</h1>
+    <p class="text-sm text-muted-foreground">
+      Hello {{user.realName}} — search the customer book by CPR or name.
+    </p>
+  </header>
+
+  <div class="grid grid-cols-2 gap-4">
+    <EditableField attributeName="_cpr" label="CPR" placeholder="10 digits" />
+    <EditableField attributeName="_name" label="Name (partial match)" />
+  </div>
+
+  <ObjectSearch
+    queryKey="customer-search"
+    config='{
+      "className": "Customer",
+      "displayColumns": [
+        {"dottedName": "Name"},
+        {"dottedName": "CPR"},
+        {"dottedName": "Email"}
+      ],
+      "constraints": [
+        {"dottedName": "CPR", "operator": "=", "value": "{{_cpr}}"},
+        {"dottedName": "Name", "operator": "like", "value": "{{_name}}"}
+      ],
+      "sorting": [{"dottedName": "Name", "direction": "asc"}]
+    }'
+    display="table"
+  />
+</div>
+```
+
+## Administration
+
+Portal templates are administered alongside Create / Update / Preview Pane templates. See [Template administration](/caseflow/administration#template-administration).
+
+Key points:
+
+- A Portal template is associated with an **application**, not a class
+- Multiple portals can be defined per application — addressed by name in the URL
+- Group-based access control applies the same way as for object-bound templates
+
+## Best practices
+
+- **Always include `<!-- workview:hideDefaultSubmit -->`** unless you genuinely want the default submit button (which has nothing to save in portal context).
+- **Prefix all input fields with `_`** so they live in transient state and cannot leak into a save attempt.
+- **Set explicit `queryKey` values** on every search so refresh actions have a target.
+- **Validate URL inputs in the template** (regex on `EditableField`) — deeplinks can carry anything.
+- **Keep the portal narrow in scope** — one job per portal. Use the application landing page for an overview and link out to focused portals for specific tasks.
+
+## Where to read next
+
+<Card
+  title="Templates and syntax"
+  icon="code"
+  href="/caseflow/templates"
+  horizontal
+>
+  Variable resolution, conditionals, loops, scope model, and the directive reference shared by all template types.
+</Card>
+
+<Card
+  title="State, persistence, and caching"
+  icon="database"
+  href="/caseflow/state-and-persistence"
+  horizontal
+>
+  Transient fields, query caching, and refresh patterns — all heavily used in Portal templates.
+</Card>

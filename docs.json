@@ -50,6 +50,7 @@
             "pages": [
               "caseflow/introduction",
               "caseflow/templates",
+              "caseflow/portal-templates",
               "caseflow/state-and-persistence",
               "caseflow/actions-and-scripting",
               "caseflow/form-components",

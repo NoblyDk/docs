@@ -1,6 +1,6 @@
 ---
 title: "Lists, filters, and search operators"
-description: "Configure Caseflow list views, filter definitions, result tables, and search operators for constraints and conditions."
+description: "Configure Caseflow list views, filter definitions, result tables, typed column filters, bulk actions, inline editing, and search operators."
 icon: "filter"
 ---
 
@@ -13,7 +13,7 @@ Filter execution is based on filter definitions that contain:
 - Constraints
 - Sorting
 
-You can create, edit, and delete user-defined filter bars. The filter designer provides dedicated editors for each definition section.
+You can create, edit, and delete user-defined filter bars. The filter designer provides dedicated editors for each definition section. Filter definitions are managed through the [Search configurator](/caseflow/administration#search-configurator).
 
 ## User input parameterization
 
@@ -28,19 +28,79 @@ User input parameters support:
 The Caseflow result table includes:
 
 - Column sorting
-- Per-column typed filtering
+- Per-column **typed filtering** with dedicated UI per data type — see [Typed column filters](#typed-column-filters)
 - Global text search
 - Virtualized rendering for large result sets
 - Sticky/pinned columns
 - Hide/show columns
 - Drag-to-group and hierarchical group expansion
 - Row selection including shift-range selection
-- Bulk edit and bulk delete actions
+- **Bulk edit** and **bulk delete** for selected rows — see [Bulk operations](#bulk-operations)
+- **Inline cell editing** by double-clicking an editable cell — see [Inline cell editing](#inline-cell-editing)
 - Object context menu with permission checks
 
+## Typed column filters
+
+Each result column exposes a filter button in the column header. Clicking the button opens a control whose UI matches the column's data type. Active filters are visually marked on the button so you can tell at a glance which columns are constraining the result set.
+
+| Data type | Filter UI |
+|---|---|
+| **String** | Faceted multi-select against the values present in the result set, plus an operator-based text input (`equals`, `contains`, `starts with`, `ends with`, `is empty`, `is not empty`). |
+| **Number** | Operator picker (`=`, `!=`, `>`, `<`, `>=`, `<=`) with a numeric input, plus an "is empty" / "is not empty" toggle. |
+| **Date** / **DateTime** | Calendar picker with operator selection. DateTime adds time-of-day controls. |
+| **Boolean** | Three-state selector — true / false / cleared. |
+| **Enum** | Multi-select from the column's known enumerated values. |
+
+All filter controls have a **Clear** action to reset that column without touching others. Filters are dispatched by the `ColumnFilterControl` router, which picks the right filter UI based on the column's detected data type.
+
 <Note>
-  Table inline editing exists but is disabled by default at table level unless explicitly enabled.
+  Which attributes appear as filterable columns is controlled by the **Filterable in tables** flag in [Attribute administration](/caseflow/administration#attribute-administration). Attributes without the flag set are still queryable through the [Search configurator](/caseflow/administration#search-configurator) but do not show a column filter button in the result table.
 </Note>
+
+## Bulk operations
+
+When one or more rows are selected, a **Bulk action bar** appears at the bottom of the table showing the selection count and the available bulk actions. Selection supports click, shift-click range selection, and a header checkbox for "select all rows currently visible."
+
+### Bulk edit
+
+The **Bulk edit** popover lets you change a single attribute on every selected row at once.
+
+- Pick the attribute to edit from a dropdown (only attributes flagged as **Editable in bulk** are listed)
+- Enter a single new value using the same control the inline editor uses for that data type
+- Apply — the platform updates rows in batches of 5 to keep the UI responsive
+
+System attributes (object ID, created date, and so on) are blocked from bulk edit. Attributes that are not flagged editable in administration are not offered.
+
+### Bulk delete
+
+The **Bulk delete** action removes every selected row, after a confirmation dialog. Permission is checked per-row — rows the user cannot delete are skipped and reported in the result summary.
+
+## Inline cell editing
+
+Double-clicking a cell in the result table opens an inline editor for that single value, scoped to that row. The editor matches the column's data type:
+
+| Data type | Inline editor |
+|---|---|
+| Text | Text input — saves on blur or **Enter** |
+| Number | Numeric input — saves on blur or **Enter** |
+| Date / DateTime | Date or date-time picker — saves on selection |
+| Boolean | Toggle — saves on change |
+| Enum | Dropdown bound to the attribute's dataset — saves on selection |
+
+Press **Escape** to cancel without saving. Cells whose data type is not editable inline (relations, documents, computed values) show an indeterminate state when double-clicked.
+
+Inline editing respects the same permission and validation rules as `EditableField` in templates: validation errors block the save, and attribute-level permissions hide editing from users without the right.
+
+## Command bar
+
+The **Command bar** is a global quick-access palette opened with **Ctrl+K** (or **⌘+K** on macOS). It lets users jump to anywhere in Caseflow without navigating menus.
+
+| Mode | Trigger | Searches |
+|---|---|---|
+| Default | **Ctrl+K** | Saved searches, applications, and recent items (saved-search runs, opened applications, opened objects) |
+| Object lookup | **#** inside the palette | Direct **Open object by ID** entry — type the ID, press Enter |
+
+Recent items are stored locally and persist across sessions. Saved searches show their folder breadcrumbs so palette results stay unambiguous when names overlap across folders.
 
 ## Search operators
 

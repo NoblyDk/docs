@@ -6,13 +6,14 @@ icon: "code"
 
 ## Template types
 
-Caseflow templates come in three types:
+Caseflow templates come in four types:
 
 | Type | Purpose |
 |---|---|
 | **Create** | Rendering for new objects |
 | **Update** | Rendering for existing objects |
 | **Preview Pane** | Compact, read-oriented view used in the search preview panel |
+| **Portal** | Application-level pages with no backing primary object — see [Portal templates](/caseflow/portal-templates) |
 
 ## Template selection
 
@@ -76,6 +77,41 @@ Component props are parsed from strings and coerced where possible:
 - Numeric literals are converted to numbers
 
 This is why template props can be authored as JSON strings in many component attributes.
+
+## Template directives
+
+Templates can include HTML comment markers that influence the rendering host's behavior. These are parsed and stripped before rendering — they do not appear in the rendered output.
+
+| Directive | Effect |
+|---|---|
+| `<!-- workview:hideDefaultSubmit -->` | Suppresses the default Create/Save submit button on the host modal so the template can supply its own submit control (typically a `SaveButton` configured for the workflow). |
+
+<Note>
+  Directive identifiers are technical literals parsed by the template runtime. They retain the `workview:` prefix for backwards compatibility.
+</Note>
+
+### Example
+
+```html
+<!-- workview:hideDefaultSubmit -->
+<div class="space-y-4">
+  <EditableField attributeName="Name" required="true" />
+  <EditableField attributeName="Description" type="textarea" />
+
+  <div class="flex justify-end gap-2">
+    <SaveButton scope="primary" label="Submit application" />
+  </div>
+</div>
+```
+
+## Template shell and styling
+
+Every Caseflow template renders inside a wrapper element with the `data-workview-template-shell` attribute. Inside the shell, the platform applies a small CSS reset so that templates can use standard utility classes like Tailwind's `.container` without being constrained by the responsive max-width rules used elsewhere in the application:
+
+- `.container` inside a template shell expands to 100% width
+- Default container margins are removed inside the shell
+
+This means template authors can use Tailwind layout primitives directly without having to wrap content in a `ResponsiveContainer` component. The selector name is a technical literal retained for backwards compatibility.
 
 ## Scope model
 
