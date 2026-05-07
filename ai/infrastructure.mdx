@@ -1,0 +1,105 @@
+---
+title: "Infrastructure and models"
+description: "The hardware, open-weight model families, and operational practices behind Nobly Insight's AI features."
+icon: "microchip"
+---
+
+## Overview
+
+Every AI feature in Nobly Insight is served by infrastructure that Nobly designs, owns, and operates. This page describes that stack at a level appropriate for technical and compliance reviewers — the hardware, the open-weight model families, how they map to features, and how we evaluate and update them over time.
+
+## Nobly-owned GPU infrastructure
+
+- **Hardware:** enterprise-class NVIDIA GPUs and supporting servers, owned by Nobly and sized for production document workloads.
+- **Location:** racks in EU co-location facilities, primarily in Denmark, with EU expansion as the default growth path for additional capacity.
+- **Operating model:** Nobly personnel operate the servers, network, operating systems, and AI software end-to-end. There is no co-located AI provider with privileged access to your data.
+- **Capacity sizing:** GPU and memory capacity allocated to your environment is dimensioned to your number of business users, which is what makes the [predictable cost model](/ai/introduction#predictable-cost-model) possible.
+- **Tenant isolation:** workloads are partitioned so that one tenant's queries cannot starve another tenant's capacity, and so that documents and embeddings remain strictly tenant-scoped.
+
+### Role of co-location providers
+
+The buildings that house our racks are operated by commercial co-location providers in the EU. Their role is strictly limited to the physical facility — they are **not** AI subprocessors and they are **not** data subprocessors:
+
+| Provided by the co-location facility | Provided by Nobly |
+|---|---|
+| Building, power, cooling, internet uplinks | The racks, servers, GPUs, storage, and network equipment inside them |
+| Physical security and access control to the building | Operating systems, AI software, models, and configuration |
+| Environmental monitoring (temperature, humidity, fire suppression) | Logical access controls, encryption, monitoring, and incident response for everything on the servers |
+
+Co-location staff have no logical access to the servers, no path to the data on them, and no role in AI processing. Your documents and queries are never visible to anyone outside Nobly.
+
+## Open-weight model families
+
+We run only **open-weight** models — models whose weights and architectures are published and which we host ourselves. This avoids closed-vendor lock-in and gives us full control over versioning, evaluation, and security review.
+
+The current generations of models we deploy come from these families:
+
+| Family | Typical role in Nobly Insight |
+|---|---|
+| **Qwen** | General-purpose language understanding, embeddings for semantic search, multilingual document Q&A. |
+| **Mistral** | General-purpose language tasks where a strong, efficient instruction-following model is needed. |
+| **NVIDIA Nemotron** | High-quality reasoning and reranking on top of retrieved candidates. |
+| **GLM-OCR family** (vision-language) | Document OCR and layout-aware text extraction for scans and complex PDFs. |
+| **Layout detection models** | Identifying structure (titles, tables, paragraphs, signatures) within a page so that downstream processing can reason about it. |
+
+We deliberately describe these by **family rather than exact version**. Open-weight models evolve quickly, and we update the specific checkpoint we run as better ones become available — without changing the trust model around your data.
+
+## How models map to features
+
+| Feature | Models involved |
+|---|---|
+| AI Search — keyword (BM25) | No model — classical full-text ranking. |
+| AI Search — semantic | Embedding model (Qwen family) for queries and documents. |
+| AI Search — query rewrite | Compact instruction-following model (Qwen / Mistral family). |
+| AI Search — reranking | Reasoning model (NVIDIA Nemotron family) scoring candidates against the query. |
+| AI Chat | Reasoning model grounded with retrieved documents via the same embedding pipeline. |
+| Document Summary | Instruction-following model with structured prompting. |
+| AI Redaction | Models specialised in detecting personal and sensitive information, with human-in-the-loop confirmation. |
+| AI Indexing | Models suggesting document types and keyword values during ingest. |
+| OCR and document parsing | Vision-language OCR (GLM-OCR family) plus a layout-detection model for structure. |
+
+## Model evaluation and updates
+
+- **Updates are initiated by Nobly**, not pushed by an upstream API provider. We choose when a new model version is qualified for production.
+- **Pre-release evaluation** runs on an internal benchmark of representative document and query samples before any model is rolled out.
+- **No customer data is used in evaluation or training.** Evaluation sets are constructed from non-customer material (synthetic, public, or Nobly-owned).
+- **Rollouts are reversible.** A model version that regresses on the benchmark, or that surfaces issues in production, can be rolled back without changing the surrounding pipeline.
+
+## Operational characteristics
+
+| Property | Approach |
+|---|---|
+| Availability | Inference services are deployed redundantly so that loss of a single node does not interrupt AI features. |
+| Scaling | Capacity scales with the number of business users on your contract; bursts within that envelope are absorbed without surcharge. |
+| Monitoring | Latency, error rate, and queue depth are monitored per service; AI feature health is visible to Nobly operations. |
+| Logging | Diagnostic logs stay within your tenant's environment and are retained according to its logging configuration. |
+| Recovery | Standard backup and disaster-recovery processes apply to the search index and any persisted AI state alongside your other tenant data. |
+
+## Why this matters
+
+Running AI on infrastructure we own, with open-weight models we control, is what makes the rest of the guarantees in this section possible:
+
+- It is what allows us to say **no third-party AI subprocessors** without exception.
+- It is what allows us to commit to **EU residency** for AI processing, not only for storage.
+- It is what allows us to offer a **predictable cost model** that does not move with token usage.
+- It is what allows us to **respond on Nobly's timeline** when a model needs to be updated, paused, or replaced — including in response to a security finding.
+
+## Where to read next
+
+<Card
+  title="Data and privacy"
+  icon="lock"
+  href="/ai/data-and-privacy"
+  horizontal
+>
+  How AI features handle your data: no training, no subprocessors, EU residency, per-tenant isolation, and what to capture in your DPA.
+</Card>
+
+<Card
+  title="AI Search introduction"
+  icon="magnifying-glass"
+  href="/ai-search/introduction"
+  horizontal
+>
+  How retrieval, ranking, and LLM rerank/rewrite work in AI Search.
+</Card>

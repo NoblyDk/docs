@@ -20,6 +20,14 @@
             ]
           },
           {
+            "group": "How we use AI",
+            "pages": [
+              "ai/introduction",
+              "ai/data-and-privacy",
+              "ai/infrastructure"
+            ]
+          },
+          {
             "group": "AI search",
             "pages": [
               "ai-search/introduction",

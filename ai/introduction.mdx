@@ -1,0 +1,83 @@
+---
+title: "How we use AI"
+description: "How Nobly Insight uses AI: open-weight models, Nobly-operated infrastructure, no third-party AI subprocessors, and a predictable infrastructure-based cost model."
+icon: "shield-check"
+---
+
+## Overview
+
+AI is built into Nobly Insight wherever it helps you find, understand, classify, and protect your documents. The way we run that AI is as deliberate as the features themselves: every model executes on Nobly-operated infrastructure, on open-weight models that we control end-to-end. Your documents and your search queries never leave that perimeter to be processed by a third-party AI provider.
+
+This section explains the principles behind that choice, where AI is used in the product, and what it means for your data, your compliance program, and your budget.
+
+## Our principles
+
+<Columns cols={2}>
+  <Card title="We do not train on your data" icon="ban">
+    No customer document, search query, conversation, or interaction is ever used to train, fine-tune, or otherwise improve any model — ours or anyone else's.
+  </Card>
+  <Card title="No third-party AI subprocessors" icon="server">
+    We do not send your data to OpenAI, Anthropic, Google, Azure OpenAI, Azure AI Foundry, or any other external AI provider. Every AI inference happens inside Nobly's own infrastructure.
+  </Card>
+  <Card title="Open-weight models only" icon="cube">
+    All models we run are open-weight — Qwen, Mistral, NVIDIA Nemotron, and similar families — so there is no closed-source dependency on a single AI vendor and no opaque update cycle out of our hands.
+  </Card>
+  <Card title="Operated by Nobly, in the EU" icon="location-dot">
+    AI workloads run on Nobly-owned GPUs in EU co-location facilities, primarily in Denmark. The racks, servers, and software are operated end-to-end by Nobly; the facility provides only power, connectivity, and physical security. Your data stays under EU data-protection law.
+  </Card>
+</Columns>
+
+## Where AI is used in Nobly Insight
+
+AI is applied at several points across the product. Every item in this list runs on the same Nobly-operated stack described above.
+
+| Feature | What AI does | Notes |
+|---|---|---|
+| [AI Search](/ai-search/introduction) | Semantic retrieval, query rewriting, and result reranking on top of traditional keyword search. | See the AI Search section for ranking details. |
+| AI Chat | Conversational question-answering grounded in your own documents and the user's permissions. | Answers are grounded in retrieved documents — the model does not answer from its training memory alone. |
+| Document Summary | Generates concise summaries of individual documents on demand. | Summaries are produced at request time and not retained beyond the response. |
+| AI Redaction | Suggests redactions of personal and sensitive information in documents prior to release or sharing. | A human reviewer always confirms suggested redactions before they are applied. |
+| AI Indexing | Suggests document types and keyword values during ingest, reducing manual classification work. | Suggestions are applied according to the workflow your administrator configures. |
+| OCR and document parsing | Extracts text and layout from scanned documents, images, and complex PDFs. | Replaces external OCR services with an on-premises pipeline. |
+
+### Supporting infrastructure
+
+| Component | Role |
+|---|---|
+| Embeddings | High-dimensional vector representations of your documents and queries, used by AI Search and AI Chat to find semantically related content. Embeddings are computed and stored entirely within Nobly's infrastructure. |
+
+## Predictable cost model
+
+The way we deliver AI also changes how it is priced. Most AI features in the wider market are billed per token, which makes the bill grow with usage in ways that are hard to predict and hard to budget for — exactly the opposite of what most procurement teams want.
+
+Because we run AI on infrastructure we own and operate, your cost is anchored to **capacity allocated for your organization**, not to the number of tokens your users happen to consume in a given month.
+
+| Aspect | Token-based AI providers | Nobly Insight |
+|---|---|---|
+| Pricing basis | Per input/output token | Allocated infrastructure capacity, scaled to your number of business users |
+| Monthly variance | High — depends on user behavior | Low — fixed for the contract period |
+| Budgeting | Forecast required, with margin for surprises | Known cost, set up front |
+| Heavy-use months | Cost spikes | No spike — the same allocation absorbs it |
+| Sensitive content | Counts against your token bill | Costs you nothing extra to process internally |
+
+In practice, this means your AI budget is a line item you can lock in at procurement time, rather than a variable cost you have to monitor and explain quarter after quarter.
+
+## Where to read next
+
+<Card
+  title="Data and privacy"
+  icon="lock"
+  href="/ai/data-and-privacy"
+  horizontal
+>
+  How your data is handled by every AI feature: no training, no subprocessors, EU residency, per-tenant isolation, and what to put in your DPA.
+</Card>
+
+<Card
+  title="Infrastructure and models"
+  icon="microchip"
+  href="/ai/infrastructure"
+  horizontal
+>
+  The hardware, the open-weight model families we run, how they map to features, and how we evaluate and update them over time.
+</Card>

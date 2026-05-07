@@ -1,0 +1,88 @@
+---
+title: "Data and privacy"
+description: "How Nobly Insight handles your data when AI features run: no training, no third-party AI subprocessors, EU residency, per-tenant isolation, and what to capture in your DPA."
+icon: "lock"
+---
+
+## Summary
+
+Every AI feature in Nobly Insight processes your data inside Nobly's own infrastructure. There is no path along which document content, queries, conversations, or AI-generated outputs are sent to an external AI provider, and there is no path along which any of that material is used to train a model. This page documents those guarantees in the form your security and compliance teams need to evaluate.
+
+## We do not train on your data
+
+- **No model training, fine-tuning, or evaluation** uses customer documents, queries, AI Chat conversations, summaries, redaction outputs, or indexing decisions.
+- **No telemetry of AI inputs or outputs** is shipped to any third party for the purpose of model improvement.
+- **Models are updated by Nobly** through a controlled release process based on publicly available open-weight checkpoints — never by ingesting customer data.
+
+This applies to every AI surface in the product: AI Search, AI Chat, Document Summary, AI Redaction, AI Indexing, and OCR.
+
+## No third-party AI subprocessors
+
+Nobly Insight does **not** route AI inference, embeddings, OCR, summarization, or any related processing through external providers. In particular, your data is not sent to:
+
+- OpenAI or Azure OpenAI
+- Anthropic
+- Google (Gemini, Vertex AI)
+- Azure AI Foundry
+- Any other hosted AI API
+
+The list of subprocessors required to deliver Nobly Insight does not include an AI provider, because there isn't one. This simplifies your supplier review and your records of processing.
+
+## Data residency
+
+| Aspect | Where your data lives |
+|---|---|
+| AI inference | Nobly-owned and -operated GPU servers in EU co-location facilities, primarily in Denmark |
+| Document storage | Within your Nobly Insight environment, hosted on EU infrastructure |
+| Embeddings (vector representations) | Stored alongside your search index, in the same EU environment |
+| AI logs and traces | Retained in the same environment as your tenant; not exported outside the EU |
+
+All processing is therefore subject to EU data-protection law, including the GDPR.
+
+## Per-tenant isolation
+
+- **Documents and embeddings are tenant-scoped.** AI Search, AI Chat, and Document Summary operate over the indexes and storage of your tenant only. There is no shared pool of customer content.
+- **Permissions are enforced at retrieval.** When AI Chat or AI Search retrieves context, the retrieval is constrained to documents the requesting user is authorised to view in Nobly Insight. AI features never widen a user's effective access.
+- **No cross-tenant model state.** Models do not retain state between requests — there is no per-customer fine-tune that could leak across tenants, because no fine-tuning takes place at all.
+
+## Lifecycle of AI inputs and outputs
+
+| Item | Lifetime |
+|---|---|
+| Search query text | Processed in memory for the duration of the request; logged for diagnostics in line with your tenant's logging configuration. |
+| AI Chat messages | Persisted as part of the conversation history visible to the user; subject to the same retention rules as other tenant data. |
+| Document Summary text | Generated at request time. Retention follows the configuration of the surface that requested it. |
+| AI Redaction suggestions | Held with the document review state until a human reviewer confirms or discards them. |
+| AI Indexing suggestions | Either applied as keyword/document-type values (in which case they live as ordinary index data) or discarded. |
+| Embeddings | Stored in your tenant's search index and refreshed when the underlying document changes or is removed. |
+
+Nothing in this list is retained outside your tenant, and nothing is forwarded to a third party.
+
+## Access controls
+
+- **Administrative access** to AI infrastructure is limited to Nobly personnel under role-based controls and audit logging.
+- **Customer-side access controls** — user, group, and document-type permissions configured in Nobly Insight — are honoured by every AI feature. AI Search and AI Chat will not surface a document to a user who cannot otherwise retrieve it.
+- **Security keywords** and other access-control metadata are synchronised to the AI Search index and applied at query time.
+
+## What to put in your DPA and security questionnaires
+
+For procurement, security review, and DPA drafting, you can rely on the following statements when describing how Nobly Insight uses AI:
+
+- AI processing is performed exclusively on Nobly-owned and -operated servers in EU co-location facilities. Co-location providers supply only the building, power, connectivity, and physical security; they have no logical access to the servers or to your data.
+- No customer data is shared with third-party AI providers (no OpenAI, Anthropic, Google, Azure OpenAI, or Azure AI Foundry in the AI processing path).
+- No customer data is used to train, fine-tune, or evaluate AI models.
+- All AI features honour the per-user and per-document permissions configured in Nobly Insight.
+- Embeddings and AI logs reside within the same EU environment as the source documents.
+
+If your compliance program requires a written confirmation tailored to a specific framework (ISO 27001, NIS2, sector-specific guidance), contact [support@nobly.dk](mailto:support@nobly.dk).
+
+## Where to read next
+
+<Card
+  title="Infrastructure and models"
+  icon="microchip"
+  href="/ai/infrastructure"
+  horizontal
+>
+  The hardware we run, the open-weight model families behind each feature, and how we evaluate and update them.
+</Card>
