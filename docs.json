@@ -26,6 +26,7 @@
               "features/document-management",
               "features/search",
               "features/case-management",
+              "features/notes-and-collaboration",
               "features/extensibility",
               "features/administration"
             ]

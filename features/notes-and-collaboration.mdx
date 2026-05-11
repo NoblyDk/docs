@@ -1,0 +1,80 @@
+---
+title: "Notes & collaboration"
+description: "Threaded notes on documents, @mentions, reminders, follows, cross-document links, and real-time notifications across the platform."
+icon: "comments"
+---
+
+## Overview
+
+Every document in Nobly Insight has its own discussion. Users can attach notes, reply in a thread, mention colleagues, link to other documents, set reminders, and follow the documents they care about. Mentions and follows surface as real-time in-app notifications and — optionally — as emails, so the right people see the right activity without having to come looking for it.
+
+## Notes on documents
+
+- **Threaded notes** per document — a root note can collect a flat list of replies
+- **Markdown formatting** for emphasis, lists, links, and inline code (a safe, validated subset — no raw HTML, images, or block quotes)
+- **Edit and delete** your own notes; deleted notes leave a tombstone so the rest of the thread still reads
+- **Private to mentioned set** — flag a note as visible only to the users tagged in it (removing a mention via edit revokes that user's access)
+- Available in two places:
+    - **Notes tab** in the search preview pane, next to Preview, Keywords, and Summary
+    - **Notes panel** in the document viewer, opened from the action row with a live note-count badge
+
+## Mentions and cross-document links
+
+| Capability | What it does |
+|---|---|
+| **@mentions** | Type `@` to pick a colleague — they get an in-app notification and (unless paused) an email. Mention suggestions filter to real users with an email address |
+| **Document links** | Type `#` followed by a document ID to insert a clickable chip linking to that document. Chips open in a new tab |
+| **Chip rendering** | Both mentions and doc-links render as coloured chips in the composer and in the rendered note |
+
+## Reminders
+
+- Schedule a one-off reminder on any note for a time in the future (1 minute to 5 years out)
+- When the reminder fires, you get an in-app notification and an email — even if no-one else has commented
+- Reminders fire once and don't repeat
+
+## Follow a document
+
+- Click **Follow** on a document to subscribe to all activity on it — new notes, edits, and deletes
+- Authors of a note are auto-followed for that document; you can unfollow at any time
+- Private notes are excluded from follower fan-out, so following a document never bypasses the mentioned-set visibility rule
+
+## Notifications
+
+Real-time notifications keep users in the loop without polling.
+
+- **In-app toast** appears immediately when you're mentioned, when someone replies in a thread you authored, when a document you follow gets new activity, or when one of your reminders fires
+- **Header bell** with an unread count and a dropdown of the latest 10 notifications
+- **Landing-page inbox** lists recent notifications in full; rows can be dismissed individually or cleared all at once
+- Clicking a notification deep-links straight to the document and the specific note, and marks the notification as read
+- **Email notifications** mirror in-app events (mentions, replies, follow events, reminders). Each user can pause email under **Settings → Notifications** without losing in-app notifications
+
+## Search results indicator
+
+- Search results show a small chat-bubble dot on rows where the document already has notes, so reviewers can see at a glance which documents have an active discussion
+- The indicator updates live when notes are created or deleted
+
+## Administration and retention
+
+- Notifications older than 90 days are purged automatically — the inbox stays focused on recent activity
+- Email delivery uses an outbox with retries and exponential backoff, so a transient mail-provider outage doesn't drop notifications
+- Per-tenant email branding (sender name, sender address, reply-to address) is configurable
+
+## Where to read next
+
+<Card
+  title="Document management"
+  icon="folder-open"
+  href="/features/document-management"
+  horizontal
+>
+  How documents are captured, stored, edited, and governed — the surface that notes attach to.
+</Card>
+
+<Card
+  title="Case management & workflow"
+  icon="table-columns"
+  href="/features/case-management"
+  horizontal
+>
+  Configurable business objects and workflow — notes can be attached to any document linked from a case.
+</Card>
