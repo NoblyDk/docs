@@ -1,0 +1,271 @@
+---
+title: "Retention & deletion"
+description: "Consultant guide for deploying, configuring, and supporting the Nobly Insight retention system: policies, approvals, legal holds, simulation, permissions, and operational defaults."
+icon: "shield-check"
+---
+
+## What this page is for
+
+This is a consultant-facing reference for the Nobly Insight retention system — the subsystem that deletes documents on a schedule under GDPR or other regulated-industry retention rules. Use it to plan a deployment, configure a tenant, map permissions onto a customer's user groups, and troubleshoot operational issues.
+
+For an end-user walkthrough (how a customer's super-user approves a batch, places a hold, etc.) point them at the in-product UI — every retention screen carries inline help in the same shape as the rest of the platform.
+
+<Warning>
+  Retention performs irreversible destructive operations under a **Purge** policy and recoverable destructive operations under **Soft delete**. Enable it deliberately: configure flags, seed permissions, build the first policy disabled, simulate, then enable. Never go straight from policy creation to enabled on a live tenant.
+</Warning>
+
+## Deployment overview
+
+Retention is opt-in per tenant and gated by three independent switches. All three must be on for the feature to be reachable end-to-end:
+
+| Switch | Where | Effect when off |
+|---|---|---|
+| `Retention:Enabled` | API `appsettings` (per-tenant config) | All retention DI / DbContext / hosted-service registrations are skipped; API endpoints fail with 404 |
+| `EnableRetentionSystem` (feature flag) | API `FeatureManagement` | Controllers exist but feature-gates reject every call |
+| `pageRetention` (feature flag) | Client `FeatureManagement` | Retention nav and routes are hidden from the UI |
+
+Startup will throw with a precise error if any pair is mismatched — for example, the API flag on but the option off.
+
+The worker is gated separately by `Retention:Worker:Enabled`. With the worker off, consultants can still build, validate, and simulate policies — only the destructive cycle is paused. This is useful for staging environments where you want the UI exposed but no documents touched.
+
+## Per-tenant configuration
+
+The defaults below ship out of the box. Review each one against the customer's policies before enabling retention on their tenant.
+
+| Setting | Default | Decide per tenant |
+|---|---|---|
+| `Retention:Enabled` | `false` | Must be `true` to use any retention feature |
+| `Retention:AutoMigrate` | `false` | Leave off in production; let the release pipeline run migrations. Turn on in single-host dev environments |
+| `Retention:Worker:Enabled` | `false` | Off until the customer signs off on the first policy. Required for any deletion to happen |
+| `Retention:Worker:Schedule:Cron` | `0 22 * * *` | Move out of the customer's business hours and any backup window |
+| `Retention:Worker:Schedule:TimeWindow` | `22:00–06:00` | A cycle started inside this window may continue past it, but a new cycle won't start outside |
+| `Retention:Worker:Schedule:Timezone` | `UTC` | Set to the customer's locale if their business-hour avoidance matters |
+| `Retention:Worker:BatchSize` | `1000` | Documents per page when scanning a policy. Raise only if a single policy has millions of matches |
+| `Retention:Worker:MaxConcurrentPolicies` | `4` | Policies processed in parallel. Tune against the customer's DB capacity |
+| `Retention:Worker:MaxRetryAttempts` | `3` | Per-document retries before quarantine |
+| `Retention:Simulation:MaxDocumentsInResult` | `10000` | Sample cap per policy in simulation output |
+| `Retention:QuarantineRetentionDays` | `90` | Days a quarantine row is kept before automatic cleanup |
+| `Retention:Audit:RetentionDays` | `365` | Days an audit log entry is kept. Lengthen for regulated industries |
+| `EnableRetentionServiceBusEvents` | `false` | Turn on if the customer subscribes a downstream system to retention events |
+
+`EnableRetentionServiceBusEvents` requires `Retention:Enabled=true`; the API throws at startup if the events flag is on without retention itself.
+
+## The retention lifecycle
+
+Every document moves through these states as policies evaluate and act on it. Consultants need to recognise each state when supporting customer admins or reading the audit log.
+
+| State | Meaning | How it's reached |
+|---|---|---|
+| **Active** | Default — no policy is tracking the document | Initial state for every document |
+| **Tagged** | A policy has matched; the grace period clock has started | Worker tagging cycle |
+| **Pending approval** | Policy requires approval; document is in an open batch | Worker's batch-creation cycle |
+| **Approved** | Approvers signed off; ready for deletion on next worker cycle | Approver action |
+| **Deleted** | Soft-deleted under a Soft-delete policy (recoverable) | Worker deletion cycle |
+| **Pending purge** | Soft-deleted under a Purge policy; awaiting permanent removal | Worker deletion cycle, Purge method |
+| **Purged** | File content and metadata permanently removed | Second-stage purge cycle |
+| **Rescued** | Pulled back to Active before deletion | Operator action via the rescue endpoint / UI |
+| **Excluded** | Permanently exempted from a specific policy | Operator action |
+| **Quarantined** | Processing failed; needs manual review | Worker error path |
+
+**Rescue**, **Exclude**, and **Legal hold** are the three escape valves. Make sure customer admins understand which one to reach for in which situation.
+
+## Policies
+
+A policy is the unit of "delete these documents after this long". Consultants typically build the first few policies during deployment, then hand the editor off to the customer's super-users.
+
+### What's on a policy
+
+| Field | Why it matters at deployment time |
+|---|---|
+| **Name / Description** | Searchable identification. Use a naming convention with the customer up front |
+| **Enabled** | Always leave off until simulation is reviewed and signed off |
+| **Priority** | Higher wins when more than one policy matches a document. Document the priority scheme per tenant |
+| **Grace period (days)** | The reprieve window for rescue. Set to match the customer's "we noticed too late" tolerance |
+| **Deletion method** | **Soft delete** (recoverable) is the default and usually correct. **Purge** is irreversible — only use when the regulator requires content removal |
+| **Requires approval** | Forces a human gate before any deletion. Recommended for any policy hitting more than a handful of documents per cycle |
+| **Approver groups** | Required when Requires approval is on. Map to existing customer user groups; don't create retention-specific groups unless the customer asks |
+| **Criteria** | The match expression — see below |
+
+### Criteria expression types
+
+The criteria editor builds an expression tree from these building blocks. The tree is capped at depth 50 and 1 000 children per AND/OR group.
+
+| Expression | Matches |
+|---|---|
+| **Document type** | A specific type, or any type in a group |
+| **Document type group** | Every type belonging to the group |
+| **Keyword** | Keyword value compared with `equals`, `startswith`, `contains`, `isnull`, etc. |
+| **Date** | Document date or stored date, absolute (`2020-01-01`) or relative (`today − 7 years`). Relative baselines are stable across a single evaluation so a long-running cycle won't shift cutoffs at midnight |
+| **Last activity** | Most recent activity (view / edit / print / mail) older than a threshold, optionally filtered to specific activity types |
+| **All documents** | Every active document, with optional document-type or group exclusions. The editor rejects an `AllDocuments` at the root of a tree with no exclusions |
+| **AND / OR / NOT** | Compose the above |
+
+Validation runs as the consultant builds; warnings ("this matches every active document") surface inline, hard errors block save.
+
+### What happens on policy edit
+
+When a saved edit changes the criteria, the editor asks how to treat documents the policy is already tracking:
+
+- **Preserve** — existing tagged documents continue under the new policy version. Safe default.
+- **Re-evaluate** — drop tagged documents and let the worker re-tag against the new criteria. Documents already in approval, deleted, or quarantined are never re-evaluated regardless of the choice.
+
+Every save creates a new policy version. Previous versions are retained for audit.
+
+[Screenshot placeholder: policy editor with criteria tree and the Preserve/Re-evaluate prompt visible.]
+
+## Simulation
+
+Run a simulation before flipping **Enabled** on any new or materially changed policy. Simulations are read-only — no `DocumentState` rows are written, no notifications fire.
+
+A simulation returns:
+- The true count of documents the policy would tag
+- A capped sample for spot-checking (default cap 10 000 per policy)
+- A truncation flag when the sample was clipped
+
+The per-document list endpoint shows the size of the *pageable sample*, not the true match count. The true count and truncation flag are on the simulation summary — make sure customer admins read the summary first.
+
+[Screenshot placeholder: simulation summary with true total + sample table.]
+
+## Approvals
+
+Pending approval batches collect documents waiting on approver-group sign-off. A policy can only have one open batch at a time (database-enforced).
+
+For consultants:
+- The approver groups configured on the policy decide who can approve or reject the batch
+- A batch is auto-rejected if every document in it has since been excluded, with audit committed in the same transaction
+- Members can exclude a single document from a batch without affecting the rest — useful when a customer admin wants to keep one specific document
+
+If the customer rejects a batch, the worker creates a new one on its next cycle if the matching set is non-empty.
+
+## Escape valves
+
+Three independent paths to stop a document from being deleted. Consultants need to map each one to a permission grant during setup.
+
+| Escape valve | Permission | Effect |
+|---|---|---|
+| **Rescue** | `retention.documents.rescue` | Pulls a Tagged / Pending-approval / Deleted (soft) document back to Active. The worker may re-tag it later if it still matches — rescue is a per-occurrence reprieve |
+| **Exclude** | `retention.documents.exclude` | Adds a per-policy exemption. Can be time-bounded (auto-expire) or permanent. Remove the exclusion to re-enable evaluation |
+| **Legal hold** | `retention.holds.manage` | Blocks deletion across **all** policies and any future policy. Carries a reference (case number), reason, and optional expiry. Hold-vs-delete checks live inside the same transaction as the delete — no TOCTOU window |
+
+[Screenshot placeholder: holds list with the create-hold dialog open.]
+
+## Quarantine
+
+A document goes to Quarantine when the worker can't complete an operation — file storage briefly unavailable, a precondition fails, or a legal hold lands between tagging and deletion. From Quarantine:
+
+- **Retry** lets the worker pick the row up again on the next cycle
+- **Resolve** marks the row as manually handled (writes an audit entry, leaves the document state alone)
+
+Quarantine rows older than `Retention:QuarantineRetentionDays` (default 90) are purged automatically.
+
+## The worker
+
+The retention worker runs the destructive cycle on the configured cron + window. For deployment:
+
+- Schedule the worker outside the customer's business hours and any backup or AI-indexer window
+- Confirm `Retention:Worker:Enabled` is on in production — if not, the worker registration is skipped entirely
+- Trigger an on-demand run from the **Dashboard** (`retention.admin` permission) when the customer needs to act outside the schedule — for example, immediately after approving a high-priority batch
+
+The worker uses a cluster-safe lock so only one instance per tenant processes at a time, even across replicas. A crashed worker's lock auto-releases.
+
+## Permissions
+
+Retention has its own permission catalogue. Grant codes to customer user groups under **Settings → Admin → Retention permissions**. A user inherits the union of their groups' permissions. Grants are cached briefly per user-group and invalidated on grant/revoke.
+
+| Permission | Grant to |
+|---|---|
+| `retention.policies.view` | Anyone who needs to see the policy list (auditors, support) |
+| `retention.policies.manage` | Retention administrators only |
+| `retention.documents.view` | Same as policies.view — the per-document status reveals what policy is acting on it |
+| `retention.documents.rescue` | Document owners or a designated rescue group |
+| `retention.documents.exclude` | Retention administrators; rarely a wider group |
+| `retention.approvals.view` | Anyone in the approval chain |
+| `retention.approvals.manage` | Members of approver groups — restricted further per-policy by the approver-group config |
+| `retention.holds.view` | Legal / compliance team |
+| `retention.holds.manage` | Legal / compliance team |
+| `retention.simulate` | Anyone authoring or reviewing policies |
+| `retention.quarantine.view` | Support / operations |
+| `retention.quarantine.manage` | Support / operations |
+| `retention.reports.view` | Auditors, compliance, anyone reviewing the audit log |
+| `retention.admin` | Tenant administrators only — grants worker on-demand triggering |
+
+The permission seeder runs at startup. If a customer reports a missing permission code, restart the API — the seeder reconciles the catalogue against the deployed code and surfaces any seeding failure as a hard startup error.
+
+[Screenshot placeholder: retention permissions admin page with a user group and its assigned permission chips.]
+
+## Audit and reports
+
+Every retention state change writes an audit row inside the same database transaction as the change itself — the audit trail never disagrees with the resulting state. The audit log endpoint feeds the **Reports → Audit log** view and powers compliance exports.
+
+The Reports section also exposes:
+
+- **Summary** — pipeline counts across all policies
+- **Per-policy summary** — the same counts scoped to one policy
+- **Pending approvals** — open batches still waiting on approvers
+- **Quarantine** — items needing manual review
+
+When a customer asks "what happened to this document", search the audit log by document ID; every transition has an entry with timestamp, actor, and a payload describing what changed.
+
+## Setup checklist
+
+Use this when standing up retention on a new tenant.
+
+<Steps>
+  <Step title="Verify prerequisites">
+    Customer has V3 endpoints enabled (`EnableV3Endpoints` feature flag) and a working `OnBaseDatabase` connection string. Retention requires both.
+  </Step>
+  <Step title="Apply schema">
+    Run the EF retention migrations against the customer's database from the release pipeline. Leave `Retention:AutoMigrate` off in production.
+  </Step>
+  <Step title="Enable the API surface">
+    Set `Retention:Enabled=true` and the `EnableRetentionSystem` feature flag. Leave the worker (`Retention:Worker:Enabled`) and the client flag (`pageRetention`) off for now.
+  </Step>
+  <Step title="Seed permission grants">
+    Restart the API so the permission seeder runs. Then map permissions onto customer user groups under **Settings → Admin → Retention permissions**.
+  </Step>
+  <Step title="Expose the UI">
+    Enable `pageRetention` in the client config. The retention nav appears for users whose groups carry at least `retention.policies.view`.
+  </Step>
+  <Step title="Author and simulate the first policy">
+    Create the policy disabled. Run a simulation; review the true count and the sample with the customer.
+  </Step>
+  <Step title="Enable the worker">
+    Set `Retention:Worker:Enabled=true` with the cron + window matching the customer's policies.
+  </Step>
+  <Step title="Enable the policy">
+    Flip the policy to Enabled. The worker will pick it up on the next cycle (or on the next manual trigger).
+  </Step>
+</Steps>
+
+## Troubleshooting
+
+| Symptom | Likely cause | What to do |
+|---|---|---|
+| Startup throws "Configuration mismatch" | Retention flags out of sync (API flag on, option off; or events flag on, retention off) | Read the error — it names the exact pair. Align both and restart |
+| Retention nav missing in the client | `pageRetention` is off, or the signed-in user has no retention permissions | Enable the client flag; verify the user's group has at least `retention.policies.view` |
+| Policy enabled but nothing tagged | Worker is off, hasn't run since the policy was enabled, or the policy actually matches zero documents | Confirm `Retention:Worker:Enabled`, trigger the worker manually from the Dashboard, re-run the simulation |
+| Documents stay in Tagged forever | Grace period hasn't expired, or the policy requires approval and the batch is pending | Check the per-document retention status — it reports current state, policy, and timing |
+| Documents stuck in Quarantine | File storage outage, document modified mid-flight, or a legal hold landed between tagging and deletion | Open the entry for the recorded error; retry once the underlying condition is resolved |
+| Worker never runs | Schedule outside the time window, or worker disabled | Verify cron + window; confirm `Retention:Worker:Enabled` |
+| "Permission code is not known" on grant | Customer is hitting a permission code that was removed or renamed in a newer release | Confirm the deployed API version matches the client expectation; the seeder enforces the catalogue |
+| Approval batch open with zero approvable documents | Every document in the batch was excluded after batch creation | The auto-reject path will close it on the next cycle. Audit row is written atomically with the rejection |
+
+## Where to read next
+
+<Card
+  title="Administration & governance"
+  icon="gear"
+  href="/features/administration"
+  horizontal
+>
+  Platform-wide audit, permissions, multi-tenancy, and observability — retention reuses these.
+</Card>
+
+<Card
+  title="Document management"
+  icon="folder-open"
+  href="/features/document-management"
+  horizontal
+>
+  How documents are captured and stored — the surface that retention acts on.
+</Card>
