@@ -20,11 +20,11 @@ Retention is opt-in per tenant and gated by three independent switches. All thre
 
 | Switch | Where | Effect when off |
 |---|---|---|
-| `Retention:Enabled` | API `appsettings` (per-tenant config) | All retention DI / DbContext / hosted-service registrations are skipped; API endpoints fail with 404 |
-| `EnableRetentionSystem` (feature flag) | API `FeatureManagement` | Controllers exist but feature-gates reject every call |
+| `Retention:Enabled` | API `appsettings` (per-tenant config) | All retention DI / DbContext / hosted-service registrations are skipped |
+| `EnableRetentionSystem` (feature flag) | API `FeatureManagement` | Controllers exist but the feature-gate returns 404 for every call |
 | `pageRetention` (feature flag) | Client `FeatureManagement` | Retention nav and routes are hidden from the UI |
 
-Startup will throw with a precise error if any pair is mismatched — for example, the API flag on but the option off.
+Startup throws with a precise error when `EnableRetentionSystem` is on while `Retention:Enabled` is off — the controllers would otherwise be live with no services wired behind them. The reverse (`Retention:Enabled` on, feature flag off) starts cleanly: the services register but the endpoints stay gated and return 404.
 
 The worker is gated separately by `Retention:Worker:Enabled`. With the worker off, consultants can still build, validate, and simulate policies — only the destructive cycle is paused. This is useful for staging environments where you want the UI exposed but no documents touched.
 
@@ -45,10 +45,10 @@ The defaults below ship out of the box. Review each one against the customer's p
 | `Retention:Worker:MaxRetryAttempts` | `3` | Per-document retries before quarantine |
 | `Retention:Simulation:MaxDocumentsInResult` | `10000` | Sample cap per policy in simulation output |
 | `Retention:QuarantineRetentionDays` | `90` | Days a quarantine row is kept before automatic cleanup |
-| `Retention:Audit:RetentionDays` | `365` | Days an audit log entry is kept. Lengthen for regulated industries |
+| `Retention:AuditLogRetentionDays` | `365` | Days an audit log entry is kept. Lengthen for regulated industries |
 | `EnableRetentionServiceBusEvents` | `false` | Turn on if the customer subscribes a downstream system to retention events |
 
-`EnableRetentionServiceBusEvents` requires `Retention:Enabled=true`; the API throws at startup if the events flag is on without retention itself.
+`EnableRetentionServiceBusEvents` only takes effect when `Retention:Enabled` is `true`. The dispatcher that publishes retention events is registered only when retention is enabled, and it stays idle until this flag is on — so with retention off the flag has no effect (nothing publishes, nothing fails).
 
 ## The retention lifecycle
 
@@ -94,7 +94,7 @@ The criteria editor builds an expression tree from these building blocks. The tr
 |---|---|
 | **Document type** | A specific type, or any type in a group |
 | **Document type group** | Every type belonging to the group |
-| **Keyword** | Keyword value compared with `equals`, `startswith`, `contains`, `isnull`, etc. |
+| **Keyword** | Keyword value compared with `equals`, `not equals`, `contains`, `is null` / `is not null`, or `greater than` / `less than` |
 | **Date** | Document date or stored date, absolute (`2020-01-01`) or relative (`today − 7 years`). Relative baselines are stable across a single evaluation so a long-running cycle won't shift cutoffs at midnight |
 | **Last activity** | Most recent activity (view / edit / print / mail) older than a threshold, optionally filtered to specific activity types |
 | **All documents** | Every active document, with optional document-type or group exclusions. The editor rejects an `AllDocuments` at the root of a tree with no exclusions |
@@ -107,7 +107,7 @@ Validation runs as the consultant builds; warnings ("this matches every active d
 When a saved edit changes the criteria, the editor asks how to treat documents the policy is already tracking:
 
 - **Preserve** — existing tagged documents continue under the new policy version. Safe default.
-- **Re-evaluate** — drop tagged documents and let the worker re-tag against the new criteria. Documents already in approval, deleted, or quarantined are never re-evaluated regardless of the choice.
+- **Re-evaluate** — drop the policy's *tagged* documents and let the worker re-tag against the new criteria. Documents that have moved past Tagged — pending approval, approved, rescued, excluded, deleted, or quarantined — are never re-evaluated regardless of the choice, so an in-flight approval batch or deletion history is never disturbed.
 
 Every save creates a new policy version. Previous versions are retained for audit.
 
@@ -170,7 +170,9 @@ The worker uses a cluster-safe lock so only one instance per tenant processes at
 
 ## Permissions
 
-Retention has its own permission catalogue. Grant codes to customer user groups under **Settings → Admin → Retention permissions**. A user inherits the union of their groups' permissions. Grants are cached briefly per user-group and invalidated on grant/revoke.
+Retention has its own permission catalogue. Grant codes to customer user groups under **Settings → Admin → Retention permissions**. A user inherits the union of their groups' permissions; their resolved set is cached for a few minutes and evicted the moment any of their groups' grants change.
+
+`retention.admin` is a catch-all — it satisfies every retention permission check on its own, so granting it is equivalent to granting everything below. Treat it accordingly.
 
 | Permission | Grant to |
 |---|---|
@@ -187,7 +189,7 @@ Retention has its own permission catalogue. Grant codes to customer user groups 
 | `retention.quarantine.view` | Support / operations |
 | `retention.quarantine.manage` | Support / operations |
 | `retention.reports.view` | Auditors, compliance, anyone reviewing the audit log |
-| `retention.admin` | Tenant administrators only — grants worker on-demand triggering |
+| `retention.admin` | Tenant administrators only. Satisfies **every** retention permission check on its own — full access to policies, holds, approvals, purge, simulation, quarantine, reports, and worker on-demand triggering. Grant deliberately |
 
 The permission seeder runs at startup. If a customer reports a missing permission code, restart the API — the seeder reconciles the catalogue against the deployed code and surfaces any seeding failure as a hard startup error.
 
