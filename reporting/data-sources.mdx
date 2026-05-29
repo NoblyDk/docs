@@ -36,7 +36,7 @@ Queries run under a dedicated **read-only reporting login**, not your own accoun
     Enter a `SELECT` query that returns the columns you want to report on. Keep it to the columns you need: the column names become the field names available to every element.
   </Step>
   <Step title="Test it">
-    Run **Test**. Nobly Insight validates the query, executes it under the reporting login with a preview row cap, and shows you the resulting columns and a sample of rows — so you can confirm the shape before saving.
+    Click **Test SQL**. Nobly Insight validates the query, executes it under the reporting login with a preview row cap, and shows you the resulting columns and a sample of rows — so you can confirm the shape before saving.
 
     <Frame caption="Testing a data source returns the column schema and a sample of rows.">
       <img src="/images/reporting/datasource-editor.png" alt="The data source editor with a SQL query and the Test result below it, listing the returned columns and sample rows." />
@@ -45,8 +45,8 @@ Queries run under a dedicated **read-only reporting login**, not your own accoun
   <Step title="Save">
     Save the data source. It is now selectable when designing dashboards.
   </Step>
-  <Step title="Refresh">
-    Run **Refresh** to materialize the snapshot. Until you do, elements bound to the source show a *not materialized yet* message.
+  <Step title="Set a schedule and refresh">
+    Pick a refresh **schedule** (for example, *Hourly*) and a **row cap**, then use **Refresh now** to materialize the snapshot for the first time. After that, the data source refreshes on its schedule. Until the first refresh, elements bound to the source show a *not materialized yet* message.
   </Step>
 </Steps>
 
@@ -68,13 +68,15 @@ To keep reporting safe and predictable, queries are validated before they run:
 
 ## Refresh and freshness
 
-Refresh is **manual and on demand** — there is no automatic schedule. Refresh whenever the underlying data has changed and you want dashboards to reflect it.
+A data source refreshes automatically on its **schedule**, and you can also refresh it on demand with **Refresh now**. Each refresh re-captures the snapshot under the row cap you set; if the query's columns have changed since the last refresh, the snapshot table is rebuilt to match — the refresh still succeeds, with a notice that the structure was updated.
 
-- Every dashboard element shows a **freshness** indicator (for example, *Updated 2 hours ago*) so viewers know how current the numbers are.
-- A refresh re-captures the snapshot. If the query's columns have changed since the last refresh, the snapshot table is rebuilt to match — the refresh still succeeds, with a notice that the structure was updated.
+- **Schedule** — pick how often the data source refreshes (for example, *Hourly*). Set a **Preferred time (UTC)** when relevant, and use the **Enabled** toggle to pause scheduled runs.
+- **Row cap** — the maximum rows captured per refresh. Leave at zero to use the server default.
+- **Blackout window** — scheduled runs skip when they would fall inside this window (for example, during a nightly maintenance window). **Manual refresh is not affected.**
+- **Freshness** — every dashboard element shows when its source was last refreshed (for example, *Updated 2 hours ago*), so viewers know how current the numbers are.
 
 <Tip>
-  Test first, then refresh. Test confirms the query is valid and returns what you expect; refresh commits that result for dashboards to read.
+  Test the query before saving. After saving, the next scheduled run picks it up — or click **Refresh now** if you can't wait.
 </Tip>
 
 ## Next
