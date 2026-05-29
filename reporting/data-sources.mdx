@@ -1,0 +1,82 @@
+---
+title: "Data sources"
+description: "Author, test, and refresh the queries that feed reporting dashboards in Nobly Insight."
+icon: "database"
+---
+
+A **data source** is a named, saved query that returns the rows and columns a dashboard element displays. You author it once, and every element that needs that data points at it.
+
+<Note>
+  This page is for **consultants**. Creating and editing data sources requires the **Reporting data sources – Manage** permission. With **View** only, you can see existing data sources but not change them.
+</Note>
+
+## How a data source works
+
+A data source has two states:
+
+- **Definition** — the query you author and save.
+- **Materialized snapshot** — the result set, captured into a snapshot table when you **refresh** the data source. Dashboards read from the snapshot, not from your live tables, so a heavy query runs only at refresh time and dashboards stay fast.
+
+Queries run under a dedicated **read-only reporting login**, not your own account. That login can only read the objects an administrator has granted it, which keeps reporting isolated from the rest of the system.
+
+## Create a data source
+
+<Steps>
+  <Step title="Open the reporting administration area">
+    Go to the reporting administration area and choose to add a new data source.
+
+    <Frame caption="The data sources list in the reporting administration area.">
+      <img src="/images/reporting/datasource-list.png" alt="The reporting administration data sources list, showing existing data sources with their freshness and a button to add a new one." />
+    </Frame>
+  </Step>
+  <Step title="Name the data source">
+    Give it a clear, descriptive name — this is what consultants pick from when adding an element.
+  </Step>
+  <Step title="Write the query">
+    Enter a `SELECT` query that returns the columns you want to report on. Keep it to the columns you need: the column names become the field names available to every element.
+  </Step>
+  <Step title="Test it">
+    Run **Test**. Nobly Insight validates the query, executes it under the reporting login with a preview row cap, and shows you the resulting columns and a sample of rows — so you can confirm the shape before saving.
+
+    <Frame caption="Testing a data source returns the column schema and a sample of rows.">
+      <img src="/images/reporting/datasource-editor.png" alt="The data source editor with a SQL query and the Test result below it, listing the returned columns and sample rows." />
+    </Frame>
+  </Step>
+  <Step title="Save">
+    Save the data source. It is now selectable when designing dashboards.
+  </Step>
+  <Step title="Refresh">
+    Run **Refresh** to materialize the snapshot. Until you do, elements bound to the source show a *not materialized yet* message.
+  </Step>
+</Steps>
+
+## Query rules
+
+To keep reporting safe and predictable, queries are validated before they run:
+
+<AccordionGroup>
+  <Accordion title="Read-only">
+    Only read queries are allowed. Statements that change data or schema are rejected at validation.
+  </Accordion>
+  <Accordion title="Runs as the reporting login">
+    The query executes under the read-only reporting login. If it references an object that login can't read, the test fails with a message pointing at the missing grant — ask an administrator to grant the reporting login access to that object, rather than changing your query.
+  </Accordion>
+  <Accordion title="Preview is capped">
+    Test results are capped to a preview number of rows so a large query stays responsive while you author it. The full result set is captured when you refresh.
+  </Accordion>
+</AccordionGroup>
+
+## Refresh and freshness
+
+Refresh is **manual and on demand** — there is no automatic schedule. Refresh whenever the underlying data has changed and you want dashboards to reflect it.
+
+- Every dashboard element shows a **freshness** indicator (for example, *Updated 2 hours ago*) so viewers know how current the numbers are.
+- A refresh re-captures the snapshot. If the query's columns have changed since the last refresh, the snapshot table is rebuilt to match — the refresh still succeeds, with a notice that the structure was updated.
+
+<Tip>
+  Test first, then refresh. Test confirms the query is valid and returns what you expect; refresh commits that result for dashboards to read.
+</Tip>
+
+## Next
+
+Once a data source is saved and refreshed, you can surface it on a dashboard — see [Building dashboards](/reporting/building-dashboards).

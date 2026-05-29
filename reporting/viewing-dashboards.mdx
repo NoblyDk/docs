@@ -1,0 +1,80 @@
+---
+title: "Viewing dashboards"
+description: "Open, filter, explore, and export reporting dashboards in Nobly Insight."
+icon: "chart-mixed"
+---
+
+This page is for **super users** — anyone who reads and explores a dashboard a consultant has built. You don't need to know how a dashboard was made to get value from it.
+
+<Note>
+  You'll see a dashboard in your list if you belong to a user group it was shared with. If a dashboard you expect is missing, ask the consultant who built it to add your group.
+</Note>
+
+## Open a dashboard
+
+Open Reporting from the navigation, pick a dashboard from the list, and it opens in the viewer. Use **Back to dashboards** in the header to return to the list.
+
+<Frame caption="A dashboard in the viewer, with the header controls along the top.">
+  <img src="/images/reporting/viewer-overview.png" alt="A Nobly Insight reporting dashboard in the viewer, showing the title, freshness, date range, refresh and export controls, value cards, and charts." />
+</Frame>
+
+## The header controls
+
+Along the top of every dashboard:
+
+- **Date range** — scopes the whole dashboard to a window (see below).
+- **Refresh** — reloads the latest data for every element on the page.
+- **Export all** — downloads an Excel workbook containing every table on the dashboard, scoped to the active date range.
+- **Freshness** — *Updated …* shows when the underlying data was last refreshed. Each element also carries its own freshness indicator.
+
+## Scope by date range
+
+The **date range** control applies to every element at once. Choose a preset:
+
+- **All time**
+- **Last 7 days**, **Last 30 days**, **Last 90 days**
+- **This month**, **This year**
+
+Each element finds its own date column and keeps only the rows inside the window. Elements that have no date column are left unchanged. The selected range is kept in the page address, so a link you copy reopens with the same range — if that range doesn't match a preset, it shows as **Custom**.
+
+<Frame caption="Choosing a date range scopes every element on the dashboard.">
+  <img src="/images/reporting/viewer-date-filter.png" alt="The date range dropdown open in the dashboard header, showing the preset options." />
+</Frame>
+
+<Note>
+  **Trend** value cards always compare their own configured period (for example, this month versus last month) and ignore the date range control.
+</Note>
+
+## Explore the data
+
+<AccordionGroup>
+  <Accordion title="Drill down across the dashboard" icon="filter">
+    Click a slice in a pie chart or a bar in a bar chart to **drill down**: every other element that uses the same data source narrows to that selection, so you can study one segment in context. The chart you clicked highlights your selection and offers a **Clear** action to remove it.
+  </Accordion>
+  <Accordion title="Read a pie chart" icon="chart-pie">
+    When a column has many categories, the smallest ones are grouped into a single **Other** slice so the chart stays readable. **Hover the Other slice** to see the categories behind it, and read each slice's value from the legend.
+  </Accordion>
+  <Accordion title="Sort and filter a table" icon="table">
+    Open the menu on any data grid column header to **sort** (ascending or descending) or **filter** the table by that column. A consultant may have set a default sort, which applies until you change it. Clearing your sort returns the table to no sorting.
+  </Accordion>
+  <Accordion title="Read a value card" icon="gauge-high">
+    Value cards show one headline number. A **gauge** shows progress toward a target; a **trend** card shows the change versus the previous period, with an arrow and percentage — hover the change for exactly which periods are compared.
+  </Accordion>
+</AccordionGroup>
+
+<Frame caption="Drilling into one category filters the rest of the dashboard.">
+  <img src="/images/reporting/viewer-drilldown.png" alt="A dashboard after clicking a pie slice, with the selected slice highlighted and the other elements filtered to that selection." />
+</Frame>
+
+## Export
+
+- **Export all** (header) — every table on the dashboard, in one workbook, scoped to the active date range.
+- **Export** on a single grid — just that table, with your current sorting and the active date range applied.
+
+<Tip>
+  Set your date range before exporting — the workbook reflects whatever range is active, so it matches what you see on screen.
+</Tip>
+
+## Keeping data current
+
+If the numbers look out of date, check the **freshness** indicator. **Refresh** reloads the latest available data, but the underlying snapshot is only as current as the last time a consultant refreshed its [data source](/reporting/data-sources). If it's still stale after a refresh, ask the consultant who owns that data source to refresh it.

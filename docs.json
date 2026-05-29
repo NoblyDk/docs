@@ -59,6 +59,15 @@
               "caseflow/lists-and-search",
               "caseflow/administration"
             ]
+          },
+          {
+            "group": "Reporting",
+            "pages": [
+              "reporting/introduction",
+              "reporting/data-sources",
+              "reporting/building-dashboards",
+              "reporting/viewing-dashboards"
+            ]
           }
         ]
       }
