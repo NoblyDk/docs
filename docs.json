@@ -27,6 +27,7 @@
               "features/search",
               "features/case-management",
               "features/notes-and-collaboration",
+              "features/retention",
               "features/extensibility",
               "features/administration"
             ]
@@ -58,6 +59,16 @@
               "caseflow/data-components",
               "caseflow/lists-and-search",
               "caseflow/administration"
+            ]
+          },
+          {
+            "group": "Retention & deletion",
+            "pages": [
+              "retention/introduction",
+              "retention/policies",
+              "retention/approvals-holds-quarantine",
+              "retention/scheduling-and-access",
+              "retention/setup"
             ]
           }
         ]

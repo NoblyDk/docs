@@ -1,0 +1,48 @@
+---
+title: "Retention & deletion"
+description: "Scheduled, policy-driven deletion of documents under GDPR and other retention rules — soft delete or permanent purge, with approvals, legal holds, and simulation."
+icon: "shield-check"
+---
+
+## Overview
+
+Retention deletes documents on a schedule, so you can meet GDPR and other regulated retention rules without anyone deleting documents by hand. You describe *which* documents to delete and *how long* to keep them as **policies**, and Nobly Insight evaluates those policies on a recurring schedule — deleting what's eligible either recoverably (**soft delete**) or permanently (**purge**).
+
+<Warning>
+  Retention performs **recoverable** deletion under a **Soft delete** policy and **irreversible** deletion under a **Permanent purge** policy. Turn it on deliberately: create the first policy disabled, simulate it, review the result, and only then enable it.
+</Warning>
+
+## What you can do
+
+| Capability | What it does |
+|---|---|
+| **Policies** | Match documents by type, keyword, date, or last activity, and set how long to keep them |
+| **Simulation** | Preview exactly which documents a policy would affect before enabling it — read-only |
+| **Approvals** | Require sign-off from designated user groups before any deletion |
+| **Escape valves** | Stop a deletion with a per-policy rescue or exclusion, or a cross-policy legal hold |
+| **Scheduling** | Run deletion automatically in an overnight window, or pause it while you author policies |
+| **Access** | Grant retention capabilities to user groups — view, manage, approve, or admin |
+
+## How it works
+
+A document a policy is tracking moves through a short lifecycle: **tagged** when it first matches, through an optional **approval** step and a **grace period**, to **deleted** (recoverable) or **purged** (permanent). Until the moment of deletion you can pull it back out — rescue it, exclude it from the policy, or place it on a legal hold.
+
+## Where to read next
+
+<Card
+  title="Retention & deletion guide"
+  icon="shield-check"
+  href="/retention/introduction"
+  horizontal
+>
+  The full guide — lifecycle, policies, approvals, legal holds, scheduling, access, and setup.
+</Card>
+
+<Card
+  title="Administration & governance"
+  icon="gear"
+  href="/features/administration"
+  horizontal
+>
+  Platform-wide audit, permissions, and multi-tenancy that retention reuses.
+</Card>
