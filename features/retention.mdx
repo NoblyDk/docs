@@ -6,17 +6,17 @@ icon: "shield-check"
 
 ## What retention does
 
-Retention is the part of Nobly Insight that deletes documents on a schedule, so a customer can meet GDPR and other regulated retention rules without anyone deleting documents by hand. You describe *which* documents to delete and *how long* to keep them as **policies**; Nobly Insight evaluates those policies on a recurring schedule and deletes what's eligible.
+Retention is the part of Nobly Insight that deletes documents on a schedule, so you can meet GDPR and other regulated retention rules without anyone deleting documents by hand. You describe *which* documents to delete and *how long* to keep them as **policies**; Nobly Insight evaluates those policies on a recurring schedule and deletes what's eligible.
 
-This page is a consultant and administrator reference: it explains how retention works end to end, how to configure policies, how processing is scheduled, and how to verify a setup before it goes live. Every retention screen also carries inline help in the same shape as the rest of the platform.
+This page explains how retention works end to end: how to configure policies, how processing is scheduled, and how to check a policy before it goes live. Every retention screen also carries inline help in the same shape as the rest of the platform.
 
 <Warning>
-  Retention performs **recoverable** deletion under a **Soft delete** policy and **irreversible** deletion under a **Permanent purge** policy. Turn it on deliberately: build the first policy disabled, simulate it, review the result with the customer, and only then enable it. Never go straight from creating a policy to enabling it on a live tenant.
+  Retention performs **recoverable** deletion under a **Soft delete** policy and **irreversible** deletion under a **Permanent purge** policy. Turn it on deliberately: create the first policy disabled, simulate it, review the result, and only then enable it. Never go straight from creating a policy to enabling it.
 </Warning>
 
 ## How it works
 
-Each document a policy is tracking moves through a series of states. You'll recognise these states when supporting a customer or reading a document's retention status.
+Each document a policy is tracking moves through a series of states. You'll recognise these states when reading a document's retention status.
 
 | State | Meaning | How it's reached |
 |---|---|---|
@@ -35,7 +35,7 @@ A document is tracked **per policy**, so the same document can be at different s
 
 ## Retention policies
 
-A policy is the unit of "delete these documents after this long". You'll typically build the first few policies during a deployment, then hand the editor to the customer's super-users.
+A policy is the unit of "delete these documents after this long". You'll typically build the first few policies during setup, then leave day-to-day editing to your super-users.
 
 ### What's on a policy
 
@@ -43,15 +43,15 @@ The policy editor is organised into **General**, **Criteria**, **Approval**, and
 
 | Setting | What it does |
 |---|---|
-| **Name / Description** | Identification for the policy. Agree a naming convention with the customer up front |
+| **Name / Description** | Identification for the policy. Agree a naming convention up front |
 | **Priority** | When more than one policy matches a document, the highest-priority policy decides the outcome. Document the priority scheme per tenant |
 | **Enabled** | Leave off until the policy has been simulated and signed off |
 | **Retention period** | How long documents must be kept — years, months, and days — before they become eligible. Works together with the criteria to decide what to target |
 | **Grace period** | A reprieve window, in days, after a document is tagged and before it becomes eligible for deletion. This is the window in which a document can still be rescued |
-| **Deletion method** | **Soft delete** (recoverable, default) or **Permanent purge** (irreversible). Only use Permanent purge when the customer's regulator requires content to be destroyed |
+| **Deletion method** | **Soft delete** (recoverable, default) or **Permanent purge** (irreversible). Only use Permanent purge when a regulator requires content to be destroyed |
 | **Activity reset actions** | Document activities that restart the retention clock for a tagged document — viewed, modified, reindexed, keywords updated, notes added, new revision, workflow started, exported. Use these so documents in active use aren't deleted |
 | **Requires approval** | Forces a human gate before any deletion under the policy. Recommended for any policy that hits more than a handful of documents per cycle |
-| **Approver groups** | The user groups whose members can approve or reject deletions for this policy. Map to existing customer groups |
+| **Approver groups** | The user groups whose members can approve or reject deletions for this policy. Map to existing user groups |
 | **Criteria** | The matching expression — see below |
 
 <Warning>
@@ -100,7 +100,7 @@ A simulation reports:
 - A sample you can spot-check
 - A flag when the sample was capped
 
-When the sample is capped, read the **total** to judge real impact, not the size of the sample. Walk through both with the customer before enabling the policy.
+When the sample is capped, read the **total** to judge real impact, not the size of the sample. Review both before enabling the policy.
 
 <Frame>
   [Screenshot placeholder: simulation summary with the matched total and a sample table.]
@@ -112,13 +112,13 @@ When a policy requires approval, the documents it would delete are collected int
 
 - A policy can have only **one open batch at a time**.
 - The policy's **approver groups** decide who can approve or reject the batch.
-- Approvers can sign off the whole batch, or **exclude individual documents** from it without affecting the rest — useful when the customer wants to keep one specific document.
+- Approvers can sign off the whole batch, or **exclude individual documents** from it without affecting the rest — useful when you want to keep one specific document.
 - If a batch is **rejected**, its documents go back to Tagged and a fresh batch forms on the next cycle if they still match.
 - A batch with nothing left to approve — because every document in it was since excluded or placed on hold — is **auto-rejected** on the next cycle.
 
 ## Escape valves
 
-There are three ways to stop a document from being deleted. Each maps to a different need, so make sure customer admins know which to use.
+There are three ways to stop a document from being deleted. Each maps to a different need, so make sure your admins know which to use.
 
 | Escape valve | Scope | Effect |
 |---|---|---|
@@ -145,15 +145,15 @@ Resolved quarantine entries are cleaned up automatically after a retention perio
 
 Retention **processing** — the recurring job that tags, approves, deletes, and purges documents — runs on a schedule, separately from the rest of the feature.
 
-- **It can be turned off independently.** While processing is off, you and the customer can still author policies, run simulations, place legal holds, and review everything in the UI — but no documents are tagged or deleted. This is the safe default until the first policy is signed off.
+- **It can be turned off independently.** While processing is off, you can still author policies, run simulations, place legal holds, and review everything in the UI — but no documents are tagged or deleted. This is the safe default until the first policy is signed off.
 - **By default it runs overnight** — a daily cycle starting at 10 PM, within a 22:00–06:00 processing window, in the tenant's time zone. A cycle that starts inside the window may finish after it, but a new cycle won't start outside the window.
-- **The schedule is set per tenant.** Place it in the customer's quiet hours, clear of business hours, backups, and any indexing or AI processing.
+- **The schedule is set per tenant.** Place it in your quiet hours, clear of business hours, backups, and any indexing or AI processing.
 
-Processing runs automatically on its schedule; there's no manual "run now" button in the product UI. If a customer needs deletion to happen sooner, adjust the schedule.
+Processing runs automatically on its schedule; there's no manual "run now" button in the product UI. If you need deletion to happen sooner, adjust the schedule.
 
 ## Access and permissions
 
-Retention access is granted per capability to the customer's **user groups**, under **Settings → Access → Permissions**. A user receives the combined permissions of every group they belong to. Changes to a group's grants take effect within a few minutes.
+Retention access is granted per capability to **user groups**, under **Settings → Access → Permissions**. A user receives the combined permissions of every group they belong to. Changes to a group's grants take effect within a few minutes.
 
 `retention.admin` is a catch-all: on its own it satisfies every retention permission check, so granting it is equivalent to granting everything below. Treat it as a tenant-administrator grant.
 
@@ -182,7 +182,7 @@ The retention navigation appears once the feature is switched on for the tenant;
 
 ## The dashboard
 
-The Retention section opens on a **Dashboard** that gives the customer an at-a-glance view of retention activity:
+The Retention section opens on a **Dashboard** that gives an at-a-glance view of retention activity:
 
 - **Document lifecycle** — counts across the retention states
 - **Active policies** — the enabled policies and what they're tracking
@@ -197,19 +197,19 @@ Every retention action — tag, approve, reject, rescue, exclude, hold, delete, 
 
 <Steps>
   <Step title="Confirm retention is available">
-    Retention is provisioned per tenant. Confirm it's switched on for the customer before you begin.
+    Retention is provisioned per tenant. Confirm it's switched on for your tenant before you begin.
   </Step>
   <Step title="Grant access">
-    Map the retention capabilities onto the customer's user groups under **Settings → Access → Permissions**. At minimum, the people authoring policies need policy-manage and simulate.
+    Map the retention capabilities onto your user groups under **Settings → Access → Permissions**. At minimum, the people authoring policies need policy-manage and simulate.
   </Step>
   <Step title="Author the first policy — disabled">
     Create the policy with **Enabled** off. Set its criteria, retention period, grace period, deletion method, and (if used) approval and approver groups.
   </Step>
   <Step title="Simulate">
-    Run a simulation. Review the matched total and the sample with the customer, and confirm the policy targets exactly what they expect.
+    Run a simulation. Review the matched total and the sample, and confirm the policy targets exactly what you expect.
   </Step>
   <Step title="Confirm the schedule">
-    Make sure the processing window sits in the customer's quiet hours, clear of business hours, backups, and indexing.
+    Make sure the processing window sits in your quiet hours, clear of business hours, backups, and indexing.
   </Step>
   <Step title="Turn on processing">
     Switch retention processing on for the tenant. Nothing is deleted yet — no policy is enabled.
