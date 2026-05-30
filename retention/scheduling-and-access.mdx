@@ -1,0 +1,55 @@
+---
+title: "Scheduling & access"
+description: "How retention processing is scheduled and paused, and how retention capabilities are granted to user groups."
+icon: "clock"
+---
+
+## Scheduling and processing
+
+Retention **processing** — the recurring job that tags, approves, deletes, and purges documents — runs on a schedule, separately from the rest of the feature.
+
+- **It can be turned off independently.** While processing is off, you can still author policies, run simulations, place legal holds, and review everything in the UI — but no documents are tagged or deleted. This is the safe default until the first policy is signed off.
+- **By default it runs overnight** — a daily cycle starting at 10 PM, within a 22:00–06:00 processing window, in the tenant's time zone. A cycle that starts inside the window may finish after it, but a new cycle won't start outside the window.
+- **The schedule is set per tenant.** Place it in your quiet hours, clear of business hours, backups, and any indexing or AI processing.
+
+Processing runs automatically on its schedule; there's no manual "run now" button in the product UI. If you need deletion to happen sooner, adjust the schedule.
+
+## Access and permissions
+
+Retention access is granted per capability to **user groups**, under **Settings → Access → Permissions**. A user receives the combined permissions of every group they belong to. Changes to a group's grants take effect within a few minutes.
+
+`retention.admin` is a catch-all: on its own it satisfies every retention permission check, so granting it is equivalent to granting everything below. Treat it as a tenant-administrator grant.
+
+| Capability | Grant to |
+|---|---|
+| `retention.policies.view` | Anyone who needs to see policies — auditors, support |
+| `retention.policies.manage` | Retention administrators only |
+| `retention.documents.view` | Same as policies.view — the per-document status shows what policy is acting on a document |
+| `retention.documents.rescue` | Document owners or a designated rescue group |
+| `retention.documents.exclude` | Retention administrators; rarely a wider group |
+| `retention.approvals.view` | Anyone in the approval chain |
+| `retention.approvals.manage` | Members of approver groups (further restricted per policy by its approver-group config) |
+| `retention.holds.view` | Legal / compliance team |
+| `retention.holds.manage` | Legal / compliance team |
+| `retention.simulate` | Anyone authoring or reviewing policies |
+| `retention.quarantine.view` | Support / operations |
+| `retention.quarantine.manage` | Support / operations |
+| `retention.reports.view` | Auditors, compliance, anyone reviewing retention activity |
+| `retention.admin` | Tenant administrators only — satisfies every retention permission check on its own. Grant deliberately |
+
+The retention navigation appears once the feature is switched on for the tenant; the individual screens then check the relevant permission, so a user only sees what their groups allow.
+
+<Frame>
+  [Screenshot placeholder: permissions page granting a retention capability to a user group.]
+</Frame>
+
+## Where to read next
+
+<Card
+  title="Setup & troubleshooting"
+  icon="list-check"
+  href="/retention/setup"
+  horizontal
+>
+  Stand retention up on a new tenant, and resolve common issues.
+</Card>

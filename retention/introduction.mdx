@@ -1,0 +1,67 @@
+---
+title: "Introduction"
+description: "What the Nobly Insight retention system does, the document lifecycle it manages, and the dashboard you monitor it from."
+icon: "shield-check"
+---
+
+## What retention does
+
+Retention is the part of Nobly Insight that deletes documents on a schedule, so you can meet GDPR and other regulated retention rules without anyone deleting documents by hand. You describe *which* documents to delete and *how long* to keep them as **policies**; Nobly Insight evaluates those policies on a recurring schedule and deletes what's eligible.
+
+This section explains how retention works end to end: how to configure policies, how processing is scheduled, and how to check a policy before it goes live. Every retention screen also carries inline help in the same shape as the rest of the platform.
+
+<Warning>
+  Retention performs **recoverable** deletion under a **Soft delete** policy and **irreversible** deletion under a **Permanent purge** policy. Turn it on deliberately: create the first policy disabled, simulate it, review the result, and only then enable it. Never go straight from creating a policy to enabling it.
+</Warning>
+
+## The document lifecycle
+
+Each document a policy is tracking moves through a series of states. You'll recognise these states when reading a document's retention status.
+
+| State | Meaning | How it's reached |
+|---|---|---|
+| **Active** | The default — no policy is acting on the document | Initial state for every document |
+| **Tagged** | A policy has matched the document and the grace-period clock has started | Scheduled processing |
+| **Pending approval** | The policy requires approval and the document is in an open approval batch | Scheduled processing |
+| **Approved** | Approvers have signed off; the document is ready for deletion | An approver acts |
+| **Deleted** | Soft-deleted under a Soft delete policy — recoverable through normal document recovery | Scheduled processing |
+| **Pending purge** | Soft-deleted under a Permanent purge policy, awaiting permanent removal | Scheduled processing |
+| **Purged** | Content and metadata permanently removed | Scheduled processing (second stage) |
+| **Rescued** | Pulled out of a policy's retention flow before deletion | An operator rescues it |
+| **Excluded** | Exempted from a specific policy | An operator excludes it |
+| **Quarantined** | Processing couldn't complete and the document needs manual review | Error during processing |
+
+A document is tracked **per policy**, so the same document can be at different states for different policies. **Rescue**, **Exclude**, and **Legal hold** are the three ways to stop a document from being deleted — see [Approvals, holds & quarantine](/retention/approvals-holds-quarantine#escape-valves) for which to reach for when.
+
+## The dashboard
+
+The Retention section opens on a **Dashboard** that gives an at-a-glance view of retention activity:
+
+- **Document lifecycle** — counts across the retention states
+- **Active policies** — the enabled policies and what they're tracking
+- **Pending approvals** — open batches still waiting on approvers
+- **Last processing run** — when processing last ran and what it did
+
+Alongside the dashboard, the section has dedicated views for **Policies**, **Documents**, **Approvals**, **Legal Holds**, **Simulation**, and **Quarantine**.
+
+Every retention action — tag, approve, reject, rescue, exclude, hold, delete, and purge — is recorded with a timestamp and the responsible user, for compliance. Retention reuses the platform-wide audit and governance described in [Administration & governance](/features/administration).
+
+## Where to read next
+
+<Card
+  title="Policies & simulation"
+  icon="scroll"
+  href="/retention/policies"
+  horizontal
+>
+  Build policies, write matching criteria, and preview their impact with a read-only simulation.
+</Card>
+
+<Card
+  title="Setup & troubleshooting"
+  icon="list-check"
+  href="/retention/setup"
+  horizontal
+>
+  Stand retention up on a new tenant, step by step.
+</Card>
