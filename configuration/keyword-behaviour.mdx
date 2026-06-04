@@ -11,8 +11,7 @@ When you assign a keyword to a document type, you also control **how it behaves*
 You set these on each keyword in the assignment editor under **Admin settings → Keywords → Keyword assignments**. To change one setting across many keywords at once, use [bulk edit](/configuration/keyword-assignment-models#bulk-editing).
 
 <Frame>
-  {/* TODO: capture screenshot — replace with /images/config-keyword-behaviour.png */}
-  <img src="/images/config-keyword-behaviour.png" alt="Expanded keyword assignment showing the required, read-only, hidden, unique and default value controls" />
+  <img src="/images/config-keyword-assignments.png" alt="Keyword assignment editor showing each assigned keyword's required, hidden, read-only, unique, required-for-retrieval, and default value controls" />
 </Frame>
 
 ## The behaviour flags
@@ -39,6 +38,10 @@ You set these on each keyword in the assignment editor under **Admin settings �
 Beyond per-keyword flags, you can define **conditional rules** that change keyword behaviour based on other values — for example, show a keyword only when another keyword has a particular value, or set a default conditionally. Manage these under **Admin settings → Keywords → Keyword behavior**.
 
 Conditional rules are scoped per document type and are evaluated live on the indexing form as users enter values. They're the tool to reach for when a static *required* or *hidden* flag isn't enough and the behaviour needs to depend on context.
+
+<Frame>
+  <img src="/images/config-keyword-behaviour.png" alt="The Keyword behavior settings page showing global keyword behaviour options and keyword conditional rules" />
+</Frame>
 
 ## Where to read next
 
