@@ -1,0 +1,59 @@
+---
+title: "Managing permissions"
+description: "Grant and revoke application permissions for user groups on the Permissions screen, with staged changes and an audit trail."
+icon: "users-gear"
+---
+
+## The Permissions screen
+
+You grant and revoke application permissions under **Settings → Admin → Access → Permissions**. The screen shows every permission in the [catalogue](/permissions/application-permissions) and every user group, and lets you decide which groups hold which permissions.
+
+- You need **View permissions** to open the screen.
+- You need **Manage permissions** to make changes. Without it, the screen is read-only.
+
+<Frame>
+  {/* TODO: capture screenshot — replace with /images/permissions-manager.png */}
+  <img src="/images/permissions-manager.png" alt="The Permissions screen showing the matrix of permissions against user groups with a save bar for pending changes" />
+</Frame>
+
+## Three ways to view it
+
+The same grants are shown three ways — pick whichever fits the task:
+
+| View | Best for |
+|---|---|
+| **Matrix** | A grid of permissions against user groups. Toggle any cell to grant or revoke. Best for an overview and quick edits. |
+| **By permission** | Pick one permission and see (and change) which groups hold it. Best for rolling out a single capability to several groups. |
+| **By group** | Pick one group and see (and change) everything it holds. Best for reviewing or setting up a group end to end. |
+
+## Staged changes and saving
+
+Edits are **staged** — nothing is sent until you save. As you grant and revoke, a **save bar** appears summarising the pending changes.
+
+1. Make your changes in any of the three views — they accumulate as pending.
+2. Optionally add a **reason**, recorded with the change for audit.
+3. **Save** to apply everything at once, or **Discard** to drop all pending changes.
+
+This lets you prepare a batch of changes, review them, and commit them together rather than one at a time.
+
+<Note>
+  Cells that a group holds **indirectly** — through a higher tier, such as **View** included by **Manage** — are shown as inherited and can't be toggled on their own. Change the tier that grants them instead. See [Permission tiers](/permissions/introduction#permission-tiers).
+</Note>
+
+## Audit trail
+
+Every grant and revoke is recorded — what changed, who changed it, when, and any reason you supplied — so permission changes are fully auditable alongside the rest of the platform's [governance logging](/features/administration#audit-and-activity-logging).
+
+## Getting the first administrator set up
+
+Permissions are granted to groups by someone who already holds **Manage permissions** — so the very first administrator has to be established when Nobly Insight is set up for your organisation. From there, that administrator uses this screen to grant every other capability to the appropriate user groups. If you're standing up a new environment and no one can open the Permissions screen, contact your Nobly implementation team or [support@nobly.dk](mailto:support@nobly.dk).
+
+## Where to read next
+
+<Card title="Application permissions" icon="key" href="/permissions/application-permissions" horizontal>
+  The full catalogue of what you can grant here, and what each tier means.
+</Card>
+
+<Card title="Document access rights" icon="user-lock" href="/configuration/document-access-rights" horizontal>
+  The separate layer that controls what users can do with documents themselves.
+</Card>

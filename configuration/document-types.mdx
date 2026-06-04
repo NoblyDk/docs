@@ -1,0 +1,104 @@
+---
+title: "Document types"
+description: "Create and manage document types and groups, default storage, auto-naming, revisions, and activation in Nobly Insight."
+icon: "folder-tree"
+---
+
+## Document types
+
+A document type is the classification a user picks when uploading a document. It determines the keywords that appear, the security that applies, where the file is stored, how the document is named, and which retention rules can target it.
+
+You manage document types under **Settings → Admin → Documents → Document types**. The list shows every type with its group, default file format, storage, whether revisions are enabled, and its status. Search and filter by name, group, or status to find a type, then open it to edit.
+
+<Frame>
+  {/* TODO: capture screenshot — replace with /images/config-document-types-list.png */}
+  <img src="/images/config-document-types-list.png" alt="Document types list under Settings, Admin, Documents, with search, group and status filters, and a New document type button" />
+</Frame>
+
+### What's on a document type
+
+| Setting | What it does |
+|---|---|
+| **Name** | How the document type appears to users and in search. Must be unique. |
+| **Group** | The [document type group](#document-type-groups) it belongs to. |
+| **Default file format** | The file format new documents of this type are expected to use (for example, PDF). |
+| **Storage** | Where the document's content is physically stored. Pick from the configured storage locations. |
+| **Auto-naming** | A template that builds each document's display name automatically — see [Auto-naming](#auto-naming) below. |
+| **Revisions** | Whether documents of this type keep a full revision history. See [Revisions](#revisions). |
+| **Active** | Whether the type is available to users. Inactive types are hidden from upload and indexing but keep their existing documents. |
+
+### Creating a document type
+
+1. Open **Settings → Admin → Documents → Document types** and choose **New document type**.
+2. Enter a **name** and pick a **group**, **default file format**, and **storage**.
+3. Optionally set an **auto-naming** template and turn on **revisions**.
+4. Optionally **copy settings from** an existing document type to reuse its access rights and keyword assignments as a starting point.
+5. Create the type, then assign its keywords from [Keyword assignments](/configuration/keyword-assignment-models) and its [access rights](/configuration/document-access-rights).
+
+<Tip>
+  **Copy from an existing type** is the fastest way to stand up a family of similar document types. It copies the chosen access rights and keyword assignments; you can adjust them afterwards.
+</Tip>
+
+## Auto-naming
+
+Auto-naming gives every document a consistent, readable display name without users having to type one. You write a **template** that mixes fixed text with tokens — values pulled from the document, such as the document type name, the document date, an incrementing number, and keyword values.
+
+- Use the **token picker** in the auto-naming field to insert the available tokens; you don't have to remember them.
+- A **live preview** shows how a name will look as you build the template.
+- If you leave the template empty, documents fall back to the system default name.
+
+```text
+Invoice – {Customer name} – {Document date}
+```
+
+### Recomputing names on existing documents
+
+Changing a template only affects documents created **after** the change — unless you recompute. From a document type's detail screen you can **apply the auto-name to existing documents**, which rewrites the display name of every current document of that type using the new template.
+
+- A preview tells you **how many documents** will be affected before you start.
+- Recompute runs as a **background job** you can monitor and stop; only names that actually change are rewritten.
+
+<Warning>
+  Recomputing renames every existing document of the type. Check the affected count in the confirmation step, and run it during a quiet period for large types — it can touch a lot of documents.
+</Warning>
+
+## Revisions
+
+When **revisions** are enabled, each change to a document keeps the previous content as a restorable version, so you get a full history of how a document evolved.
+
+<Warning>
+  Revisions are a one-way switch. Once you enable revisions on a document type and save, you cannot turn them off again — so enable them deliberately.
+</Warning>
+
+## Activating and deactivating
+
+Use **Active / Inactive** to control whether a document type is offered to users:
+
+- **Deactivate** to retire a type. It disappears from upload and indexing, but its existing documents stay searchable and intact.
+- **Reactivate** at any time to make it available again.
+
+Deactivating is the safe alternative to deleting — it never touches existing documents.
+
+## Document type groups
+
+Document type groups organise related types and make them easier to secure and find. Manage them from the **Manage groups** action on the Document types screen: create a group, rename it, or delete one that's no longer needed.
+
+<Warning>
+  A document type group can only be deleted when no document types still belong to it. Move or delete its types first.
+</Warning>
+
+## Deleting a document type
+
+Deleting a document type is permanent and requires the **Document Structure Administration** permission (see [Application permissions](/permissions/application-permissions)). To protect your archive, a type **cannot be deleted while documents of that type still exist** — deactivate it instead if it holds documents.
+
+When a delete is blocked, Nobly Insight tells you what's in the way so you can resolve it.
+
+## Where to read next
+
+<Card title="Keyword assignment models" icon="layer-group" href="/configuration/keyword-assignment-models" horizontal>
+  Add keywords to a document type as standalone fields or as keyword type groups.
+</Card>
+
+<Card title="Document access rights" icon="user-lock" href="/configuration/document-access-rights" horizontal>
+  Decide what each user group can do with documents of this type.
+</Card>

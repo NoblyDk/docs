@@ -1,0 +1,49 @@
+---
+title: "Introduction"
+description: "How access is controlled in Nobly Insight — application permissions, document access rights, and security keywords — and how they combine."
+icon: "shield-halved"
+---
+
+## The access model
+
+Access in Nobly Insight is controlled in layers, each answering a different question. Together they decide who can run the platform, who can work with which documents, and who can see individual sensitive records.
+
+| Layer | Answers | Where it's configured |
+|---|---|---|
+| **Application permissions** | *Which admin and configuration capabilities can this user use?* — managing document types, keywords, permissions, retention, and so on. | **Settings → Admin → Access → Permissions** — covered in this section. |
+| **Document access rights** | *What can this user do with documents of a given type?* — view, create, modify, delete, print, mail. | **Settings → Admin → Documents → Access rights** — see [Document access rights](/configuration/document-access-rights). |
+| **Security keywords** | *Can this user see this particular record?* — record-level access driven by a keyword value. | Part of keyword configuration and governance. |
+
+<Note>
+  A quick rule of thumb: **application permissions** are for *administrators* configuring the system; **document access rights** are for *everyday users* doing their work; **security keywords** narrow access to individual records on top of both.
+</Note>
+
+This section focuses on the first layer — **application permissions**. Document access rights are documented with the document types they apply to, and security keywords are part of the wider governance model described in [Administration & governance](/features/administration).
+
+## Permissions are granted to user groups
+
+Application permissions are always granted to **user groups**, never to individuals directly. A user's effective permissions are the combination of everything granted to every group they belong to. To give one person a capability, add them to a group that has it — or grant the capability to a group they're already in.
+
+This keeps access manageable: you reason about a handful of groups instead of every individual user, and membership changes take effect immediately.
+
+## Permission tiers
+
+Most permission areas come in tiers that build on each other:
+
+| Tier | Grants |
+|---|---|
+| **View** | Read-only access to the area — see the configuration without changing it. |
+| **Manage** | Create and update within the area. Includes everything **View** grants. |
+| **Admin** | Full control of the area, including deleting. Includes everything **Manage** and **View** grant. |
+
+Because the tiers are cumulative, you grant **one** tier per group for an area — granting **Manage** automatically gives that group **View**, and **Admin** gives both. Deleting is deliberately reserved for the **Admin** tier, so a group can be allowed to create and edit configuration without being able to delete it.
+
+## Where to read next
+
+<Card title="Application permissions" icon="key" href="/permissions/application-permissions" horizontal>
+  The full catalogue of permissions, grouped by area, and exactly what each tier grants.
+</Card>
+
+<Card title="Managing permissions" icon="users-gear" href="/permissions/managing-permissions" horizontal>
+  Grant and revoke permissions for user groups on the Permissions screen.
+</Card>

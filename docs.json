@@ -62,6 +62,26 @@
             ]
           },
           {
+            "group": "Document types & keywords",
+            "pages": [
+              "configuration/introduction",
+              "configuration/document-types",
+              "configuration/keyword-types",
+              "configuration/keyword-assignment-models",
+              "configuration/autofill-keyword-sets",
+              "configuration/keyword-behaviour",
+              "configuration/document-access-rights"
+            ]
+          },
+          {
+            "group": "Permissions & access",
+            "pages": [
+              "permissions/introduction",
+              "permissions/application-permissions",
+              "permissions/managing-permissions"
+            ]
+          },
+          {
             "group": "Retention & deletion",
             "pages": [
               "retention/introduction",

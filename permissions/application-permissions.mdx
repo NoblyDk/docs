@@ -1,0 +1,83 @@
+---
+title: "Application permissions"
+description: "The full catalogue of Nobly Insight application permissions, grouped by area, and what each tier grants."
+icon: "key"
+---
+
+## The permission catalogue
+
+Application permissions are organised into **areas**, each covering one part of the platform. Within an area, permissions come in [tiers](/permissions/introduction#permission-tiers) — typically **View**, **Manage**, and **Admin** — that build on each other. This page lists every area and what its permissions grant.
+
+You'll see these exact areas and permissions on the [Permissions screen](/permissions/managing-permissions), where you grant them to user groups.
+
+## Identity & access
+
+Who can manage users, groups, and the permissions themselves.
+
+| Permission | Grants |
+|---|---|
+| **View users** | See user accounts. |
+| **Manage users** | Create, update, enable, and disable user accounts. |
+| **View user groups** | See user groups and their membership. |
+| **Manage user groups** | Add and remove users from groups. |
+| **View permissions** | See the permission catalogue and which groups hold what. Needed to open the Permissions screen. |
+| **Manage permissions** | Grant and revoke application permissions for user groups. Needed to make changes on the Permissions screen. |
+
+## Document structure
+
+Who can configure document types, document type groups, keyword assignments, and document access rights. See [Document types](/configuration/document-types).
+
+| Permission | Grants |
+|---|---|
+| **View document structure** | See document type groups, document types, keyword assignments, and document access rights. |
+| **Manage document structure** | Create and update document type groups, document types, keyword assignments, and access rights. Includes **View**. |
+| **Document structure administration** | Full control, including **deleting** document types and groups. Includes **Manage** and **View**. |
+
+## Keyword configuration
+
+Who can configure keyword types, keyword type groups, and autofill keyword sets. See [Keyword types](/configuration/keyword-types).
+
+| Permission | Grants |
+|---|---|
+| **View keyword configuration** | See keyword types, keyword type groups, autofill keyword sets, and value lists. |
+| **Manage keyword configuration** | Create and update keyword types, groups, autofill sets, and their values. Includes **View**. |
+| **Keyword configuration administration** | Full control, including **deleting** keyword types, groups, and sets, and removing members. Includes **Manage** and **View**. |
+
+## Client settings
+
+Who can configure platform behaviour for upload, keywords, and shared searches.
+
+| Permission | Grants |
+|---|---|
+| **View / Manage upload behaviour** | See or configure how the upload experience behaves. |
+| **View / Manage keyword behaviour** | See or configure keyword behaviour settings and [conditional keyword rules](/configuration/keyword-behaviour#conditional-keyword-rules). |
+| **View / Manage system searches** | See or configure the system-wide saved searches and folders shared with users. |
+
+In each pair, **Manage** includes everything **View** grants.
+
+## Retention
+
+Who can run and govern the [retention and deletion](/retention/introduction) features. This area has the most permissions, covering policies, document actions, approvals, legal holds, simulation, quarantine, and reports.
+
+| Permission | Grants |
+|---|---|
+| **View / Manage retention policies** | See or create, update, and delete retention policies. |
+| **View retention documents** | See the retention status and history of documents. |
+| **Rescue / Exclude retention documents** | Pull documents out of, or exempt them from, a policy's deletion flow. |
+| **View / Manage retention approvals** | See or approve and reject deletion batches. |
+| **View / Manage legal holds** | See or place and release legal holds. |
+| **Run retention simulations** | Preview a policy's impact without changing anything. |
+| **View retention quarantine / reports** | See documents that failed processing, and retention reports. |
+| **Retention administration** | Full control of all retention permissions. |
+
+The retention permissions are described in context in the [Retention & deletion](/retention/introduction) section.
+
+## Where to read next
+
+<Card title="Managing permissions" icon="users-gear" href="/permissions/managing-permissions" horizontal>
+  Grant and revoke these permissions for user groups on the Permissions screen.
+</Card>
+
+<Card title="The access model" icon="shield-halved" href="/permissions/introduction" horizontal>
+  How application permissions fit alongside document access rights and security keywords.
+</Card>

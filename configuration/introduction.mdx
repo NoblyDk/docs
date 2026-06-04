@@ -1,0 +1,51 @@
+---
+title: "Introduction"
+description: "How document types, keywords, keyword groups, and autofill sets fit together in Nobly Insight — and where to configure them."
+icon: "sitemap"
+---
+
+## What this section covers
+
+Document types and keywords are the backbone of how Nobly Insight classifies and describes everything you store. Before a document can be uploaded, found, secured, or retained, it needs a **document type** and a set of **keywords**. This section explains the building blocks, how they relate, and how to manage each one.
+
+You configure all of it under **Settings → Admin**, split across the **Documents** and **Keywords** areas. These screens are for administrators — changing them affects how every user uploads, indexes, and searches documents.
+
+## The building blocks
+
+| Concept | What it is |
+|---|---|
+| **Document type** | A classification for a kind of document — *Invoice*, *Contract*, *ID card*. It carries its own keywords, security, default storage, naming rule, and retention behaviour. |
+| **Document type group** | A folder that organises related document types so they're easier to find and secure together. |
+| **Keyword** | A single piece of metadata on a document — *Invoice number*, *Customer name*, *Date received*. Keywords are how documents are indexed and retrieved. |
+| **Keyword type** | The reusable *definition* of a keyword — its data type, length, validation, and any value list. You define a keyword type once and assign it to as many document types as you need. |
+| **Keyword type group** | A reusable bundle of keyword types that belong together (for example, a full address). Assign the group to a document type to add all its keywords at once. |
+| **Autofill keyword set** | A lookup table that fills related keywords automatically once a user enters a primary value — pick a *Customer number* and the *Name* and *Address* fill themselves in. |
+
+## How it fits together
+
+A **document type** is the thing users pick when they upload. Each document type has an ordered list of **keyword assignments** — which keywords appear on it and how they behave. A keyword reaches a document type in one of two ways:
+
+- **Standalone** — a single keyword type assigned directly.
+- **Through a keyword type group** — the whole bundle is assigned at once, as either a single set of values or a repeating set.
+
+[Autofill keyword sets](/configuration/autofill-keyword-sets) sit on top of this: they speed up indexing by filling several keywords from one lookup value, but they don't change which keywords a document type has.
+
+Finally, **[document access rights](/configuration/document-access-rights)** decide what each user group can *do* with documents of a given type — view, create, modify, delete, and so on. They live in this section because they're configured per document type, but they're part of the wider access model described in [Permissions & access](/permissions/introduction).
+
+<Note>
+  A useful way to think about it: **keyword types** are the vocabulary, **document types** are the templates that use that vocabulary, **keyword assignments** decide how each word behaves on a template, and **access rights** decide who may use it.
+</Note>
+
+## Where to read next
+
+<Card title="Document types" icon="folder-tree" href="/configuration/document-types" horizontal>
+  Create and manage document types and groups, default storage, auto-naming, revisions, and activation.
+</Card>
+
+<Card title="Keyword types" icon="tags" href="/configuration/keyword-types" horizontal>
+  Define the metadata fields: data types, length, masks, and value lists.
+</Card>
+
+<Card title="Keyword assignment models" icon="layer-group" href="/configuration/keyword-assignment-models" horizontal>
+  Standalone keywords, single-instance groups, and multi-instance groups — and how each attaches to a document type.
+</Card>
