@@ -8,7 +8,7 @@ icon: "folder-tree"
 
 A document type is the classification a user picks when uploading a document. It determines the keywords that appear, the security that applies, where the file is stored, how the document is named, and which retention rules can target it.
 
-You manage document types under **Settings → Admin → Documents → Document types**. The list shows every type with its group, default file format, storage, whether revisions are enabled, and its status. Search and filter by name, group, or status to find a type, then open it to edit.
+You manage document types under **Admin settings → Documents → Document types** (open **Admin settings** by clicking your profile at the bottom-left of the sidebar). The list shows every type with its group, default file format, storage, whether revisions are enabled, and its status. Search and filter by name, group, or status to find a type, then open it to edit.
 
 <Frame>
   {/* TODO: capture screenshot — replace with /images/config-document-types-list.png */}
@@ -29,7 +29,7 @@ You manage document types under **Settings → Admin → Documents → Document 
 
 ### Creating a document type
 
-1. Open **Settings → Admin → Documents → Document types** and choose **New document type**.
+1. Open **Admin settings → Documents → Document types** and choose **New document type**.
 2. Enter a **name** and pick a **group**, **default file format**, and **storage**.
 3. Optionally set an **auto-naming** template and turn on **revisions**.
 4. Optionally **copy settings from** an existing document type to reuse its access rights and keyword assignments as a starting point.
@@ -41,15 +41,30 @@ You manage document types under **Settings → Admin → Documents → Document 
 
 ## Auto-naming
 
-Auto-naming gives every document a consistent, readable display name without users having to type one. You write a **template** that mixes fixed text with tokens — values pulled from the document, such as the document type name, the document date, an incrementing number, and keyword values.
+Auto-naming gives every document a consistent, readable display name without users having to type one. You write a **template** that mixes fixed text with **tokens** — placeholders that are replaced with values from the document when it's stored.
 
-- Use the **token picker** in the auto-naming field to insert the available tokens; you don't have to remember them.
-- A **live preview** shows how a name will look as you build the template.
-- If you leave the template empty, documents fall back to the system default name.
+| Token | Replaced with |
+|---|---|
+| `%N` | The document type name |
+| `%D2` | The document date |
+| `%D1` | The date the document was stored |
+| `%I1` | The time the document was stored |
+| `%U` | The name of the user who stored the document |
+| `%#` | The document's unique number |
+| `%K…` | A keyword value — see below |
+
+A **keyword token** takes the form `%K` followed by the keyword type's five-digit ID and an instance number — for example `%K00123.1` is the first value of keyword type `123`. You normally insert keyword tokens from the **token picker** rather than typing them, so you don't need to know the IDs.
 
 ```text
-Invoice – {Customer name} – {Document date}
+%N - %K00123.1 - %D2
 ```
+
+For an *Invoice* type, that template might produce **`Invoice - ACME Ltd - 15-07-2024`**.
+
+- Use the **token picker** in the auto-naming field to insert any token, and watch the **live preview** update as you build the template.
+- Dates and times use your environment's configured date and time formats.
+- If you leave the template empty, documents fall back to the default name — the document type name followed by the document's number.
+- Generated names are limited to 255 characters.
 
 ### Recomputing names on existing documents
 
