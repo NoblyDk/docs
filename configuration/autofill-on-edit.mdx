@@ -1,0 +1,55 @@
+---
+title: "Autofill on edit"
+description: "Bind an autofill keyword set to a keyword group so editing any keyword in the group re-runs the look-up and keeps the group's values coordinated."
+icon: "arrows-rotate"
+---
+
+## What this does
+
+An [autofill keyword set](/configuration/autofill-keyword-sets) normally fills related keywords during indexing. **Autofill on edit** extends that to the whole life of a document: when an autofill set is bound to a keyword group, editing *any* keyword in that group re-runs the look-up and re-applies the set's values, so the group stays coordinated.
+
+Without this, someone could change one field after a document is filed — the *Park name* but not the *Park ID*, for example — and quietly break the link between them. With a binding in place, Nobly Insight re-coordinates the group on every save.
+
+## How it behaves
+
+- **Edit the primary keyword** — the group is looked up by the new primary value and the related keywords are refilled, exactly like indexing.
+- **Edit a member keyword** — the set is looked up by the value you changed, and the rest of the group (including the primary) is re-applied from the matching record.
+- **One match** — the group's values update automatically when you save.
+- **Several matches** — when the value you entered could belong to more than one record, Nobly Insight asks you to pick which one before the edit is saved. Choose the record and the group fills from it.
+- **No match** — the edit is rejected so the group can't be left in an inconsistent state. Correct the value and try again.
+
+<Note>
+  Coordination is enforced by Nobly Insight when the document is saved, not only in the screen you're editing. The values stay consistent however the edit is made.
+</Note>
+
+Before a save replaces several fields from the bound set, Nobly Insight flags the affected keywords so the change isn't a surprise — you can review which values will be re-applied and, where more than one record matches, choose a different one.
+
+## Multi-instance groups
+
+When a keyword group repeats on a document (several instances of the same group), only the **instance you edited** is re-coordinated. Editing one instance never disturbs the others.
+
+## Internal and external sets
+
+Autofill on edit works for both [internal and external sets](/configuration/autofill-keyword-sets#internal-and-external-sets). For external sets, the matching record is fetched from the source at edit time, so the group always reflects the latest values there.
+
+## Setting up a binding
+
+Bindings are configured by your administrator. A few rules apply:
+
+- A keyword group can be bound to **at most one** autofill set.
+- The keywords that get coordinated are the group's members that are also part of the bound set.
+- Hidden or read-only keywords in the group follow the document type's keyword rules — they're protected from being overwritten on an existing document unless the editor has rights to change restricted keywords.
+
+<Warning>
+  Binding a set to a group changes how edits behave for every document of the affected types. Review the group's members before binding so the right keywords stay coordinated.
+</Warning>
+
+## Where to read next
+
+<Card title="Autofill keyword sets" icon="wand-magic-sparkles" href="/configuration/autofill-keyword-sets" horizontal>
+  Build the look-up table that an edit-time binding draws its values from.
+</Card>
+
+<Card title="Keyword behaviour" icon="sliders" href="/configuration/keyword-behaviour" horizontal>
+  Control how keywords validate, hide, and carry over across edits.
+</Card>
