@@ -38,8 +38,8 @@ Queries run under a dedicated **read-only reporting login**, not your own accoun
   <Step title="Test it">
     Click **Test SQL**. Nobly Insight validates the query, executes it under the reporting login with a preview row cap, and shows you the resulting columns and a sample of rows — so you can confirm the shape before saving.
 
-    <Frame caption="Testing a data source returns the column schema and a sample of rows.">
-      <img src="/images/reporting/datasource-editor.png" alt="The data source editor with a SQL query and the Test result below it, listing the returned columns and sample rows." />
+    <Frame caption="The data source editor: write the SELECT, then Test SQL to validate it and preview the result.">
+      <img src="/images/reporting/datasource-editor-1.png" alt="The data source editor showing the name, description, the SQL SELECT statement, and the Test SQL and Refresh now actions." />
     </Frame>
   </Step>
   <Step title="Save">
@@ -74,6 +74,10 @@ A data source refreshes automatically on its **schedule**, and you can also refr
 - **Row cap** — the maximum rows captured per refresh. Leave at zero to use the server default. If a source has more rows than the cap, dashboards read only the captured rows and elements show a notice that totals, charts, and exports may be incomplete — raise the cap for sources that need the full set.
 - **Blackout window** — scheduled runs skip when they would fall inside this window (for example, during a nightly maintenance window). **Manual refresh is not affected.**
 - **Freshness** — every dashboard element shows when its source was last refreshed (for example, *Updated 2 hr ago*), so viewers know how current the numbers are.
+
+<Frame caption="A data source's schedule, row cap, and blackout window.">
+  <img src="/images/reporting/datasource-editor-2.png" alt="The schedule section of the data source editor, showing the refresh schedule, preferred time, row cap, the Enabled toggle, and the blackout window start and end." />
+</Frame>
 
 <Tip>
   Test the query before saving. After saving, the next scheduled run picks it up — or click **Refresh now** if you can't wait.
