@@ -1,0 +1,62 @@
+---
+title: "Setup & troubleshooting"
+description: "A step-by-step checklist for standing up retention on a new tenant, plus fixes for the issues you're most likely to hit."
+icon: "list-check"
+---
+
+## Setting up retention on a new tenant
+
+<Steps>
+  <Step title="Confirm retention is available">
+    Retention is provisioned per tenant. Confirm it's switched on for your tenant before you begin.
+  </Step>
+  <Step title="Grant access">
+    Map the retention capabilities onto your user groups under **Settings → Access → Permissions**. At minimum, the people authoring policies need policy-manage and simulate.
+  </Step>
+  <Step title="Author the first policy — disabled">
+    Create the policy with **Enabled** off. Set its criteria, retention period, grace period, deletion method, and (if used) approval and approver groups.
+  </Step>
+  <Step title="Simulate">
+    Run a simulation. Review the matched total and the sample, and confirm the policy targets exactly what you expect.
+  </Step>
+  <Step title="Confirm the schedule">
+    Make sure the processing window sits in your quiet hours, clear of business hours, backups, and indexing.
+  </Step>
+  <Step title="Turn on processing">
+    Switch retention processing on for the tenant. Nothing is deleted yet — no policy is enabled.
+  </Step>
+  <Step title="Enable the policy">
+    Flip the policy to **Enabled**. It's picked up on the next scheduled cycle.
+  </Step>
+</Steps>
+
+## Troubleshooting
+
+| Symptom | Likely cause | What to do |
+|---|---|---|
+| Retention section missing from the navigation | Retention isn't switched on for the tenant, or the user's groups have no retention access | Confirm retention is provisioned; grant at least `retention.policies.view` to the user's group |
+| Policy enabled but nothing is tagged | Processing is paused, hasn't run since you enabled the policy, or the policy matches zero documents | Confirm processing is on, wait for the next cycle, and re-run the simulation |
+| Documents stay Tagged and never delete | The grace period hasn't elapsed, or the policy requires approval and the batch is still pending | Check the document's retention status for its current state and timing; approve the open batch if needed |
+| Documents land in Quarantine | A transient error during processing — storage briefly unavailable, the document changed mid-process, or a legal hold landed between tagging and deletion | Open the quarantine entry for the recorded reason and retry once the underlying issue is resolved |
+| Nothing happens overnight | The schedule sits outside the processing window, or processing is paused | Confirm the schedule and that processing is switched on |
+| An approval batch is open but nothing can be approved | Every document in it was excluded or placed on hold after the batch was created | It's auto-rejected on the next cycle; a fresh batch forms if documents still match |
+
+## Where to read next
+
+<Card
+  title="Administration & governance"
+  icon="gear"
+  href="/features/administration"
+  horizontal
+>
+  Platform-wide audit, permissions, multi-tenancy, and observability — retention reuses these.
+</Card>
+
+<Card
+  title="Document management"
+  icon="folder-open"
+  href="/features/document-management"
+  horizontal
+>
+  How documents are captured and stored — the surface that retention acts on.
+</Card>

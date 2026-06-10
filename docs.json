@@ -27,6 +27,7 @@
               "features/search",
               "features/case-management",
               "features/notes-and-collaboration",
+              "features/retention",
               "features/extensibility",
               "features/administration"
             ]
@@ -68,6 +69,36 @@
               "reporting/data-sources",
               "reporting/building-dashboards",
               "reporting/viewing-dashboards"
+            ]
+          },
+          {
+            "group": "Document types & keywords",
+            "pages": [
+              "configuration/introduction",
+              "configuration/document-types",
+              "configuration/keyword-types",
+              "configuration/keyword-assignment-models",
+              "configuration/autofill-keyword-sets",
+              "configuration/keyword-behaviour",
+              "configuration/document-access-rights"
+            ]
+          },
+          {
+            "group": "Permissions & access",
+            "pages": [
+              "permissions/introduction",
+              "permissions/application-permissions",
+              "permissions/managing-permissions"
+            ]
+          },
+          {
+            "group": "Retention & deletion",
+            "pages": [
+              "retention/introduction",
+              "retention/policies",
+              "retention/approvals-holds-quarantine",
+              "retention/scheduling-and-access",
+              "retention/setup"
             ]
           }
         ]

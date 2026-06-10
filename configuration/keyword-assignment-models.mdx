@@ -1,0 +1,63 @@
+---
+title: "Keyword assignment models"
+description: "How keywords attach to document types — standalone keywords, single-instance groups, and multi-instance groups."
+icon: "layer-group"
+---
+
+## Assigning keywords to a document type
+
+A keyword type only appears on a document once it's **assigned** to that document type. You manage assignments under **Admin settings → Keywords → Keyword assignments**: pick a document type to open its ordered list of keywords, then add, remove, reorder, and configure each one.
+
+A keyword reaches a document type in one of three ways — as a **standalone** keyword, through a **single-instance** group, or through a **multi-instance** group. Choosing the right model is the most important configuration decision for a document type's metadata.
+
+<Frame>
+  <img src="/images/config-keyword-assignments.png" alt="Keyword assignment editor for a document type showing an ordered list of standalone keywords and a keyword group, with add and reorder controls" />
+</Frame>
+
+## The three models
+
+| Model | What it means | Reach for it when |
+|---|---|---|
+| **Standalone keyword** | A single keyword type assigned directly to the document type. It holds one value per document. | A field stands on its own — *Invoice number*, *Status*. |
+| **Single-instance group** | A [keyword type group](#keyword-type-groups) assigned so its keywords appear **once** per document, as one set of values. | Several fields always belong together and occur once — a single *address* (street, city, postcode). |
+| **Multi-instance group** | A keyword type group assigned so it can **repeat**, holding several rows of values on one document. | The same set of fields can occur many times — multiple *line items*, several *contacts*. |
+
+<Note>
+  The difference between single- and multi-instance is **repetition**. A single-instance group is one row of grouped values; a multi-instance group is a table of rows, each row a complete set of the group's keywords.
+</Note>
+
+## Keyword type groups
+
+A keyword type group bundles related keyword types so you can assign them together and keep them consistent across document types. You create and manage groups from the **Groups** tab under **Admin settings → Keywords → Keyword types**.
+
+- Choose **single-instance** or **multi-instance** storage when you create the group — this fixes how it behaves wherever it's assigned.
+- Add the member keyword types in the order they should appear.
+- You can add members to an existing group later; you can also remove members, though removing one is destructive (see below).
+
+When you assign a group to a document type, all its members come along as a unit. Reordering or removing individual group members is done on the group, not on each document type.
+
+<Warning>
+  Removing a member from a keyword type group permanently deletes the values stored in that member across every document that uses the group. Nobly Insight warns you and asks you to confirm the data loss first, and requires the **Keyword Configuration Administration** permission.
+</Warning>
+
+## Ordering
+
+Assignments are an **ordered list** — the order here is the order users see on the indexing form. Drag to reorder, or use **Order alphabetically** to sort the list by name in one step.
+
+## The no-duplicate rule
+
+A keyword type can be represented **only once** on a given document type. You can't assign the same keyword both standalone and through a group, or through two different groups, on the same document type. This keeps each piece of metadata unambiguous. If an assignment would duplicate a keyword, Nobly Insight blocks it and explains the conflict.
+
+## Bulk editing
+
+When a document type has many keywords, use the **bulk edit** action to set a single behaviour — such as *required* or *read-only* — across several assignments at once, instead of opening each one. The available behaviours are covered in [Keyword behaviour](/configuration/keyword-behaviour).
+
+## Where to read next
+
+<Card title="Keyword behaviour on a document type" icon="sliders" href="/configuration/keyword-behaviour" horizontal>
+  Make a keyword required, read-only, hidden, or unique, and give it a default value.
+</Card>
+
+<Card title="Autofill keyword sets" icon="wand-magic-sparkles" href="/configuration/autofill-keyword-sets" horizontal>
+  Fill several assigned keywords automatically from one look-up value.
+</Card>
