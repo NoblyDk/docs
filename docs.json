@@ -62,16 +62,6 @@
             ]
           },
           {
-            "group": "Reporting",
-            "pages": [
-              "reporting/introduction",
-              "reporting/setup",
-              "reporting/data-sources",
-              "reporting/building-dashboards",
-              "reporting/viewing-dashboards"
-            ]
-          },
-          {
             "group": "Document types & keywords",
             "pages": [
               "configuration/introduction",
@@ -89,6 +79,16 @@
               "permissions/introduction",
               "permissions/application-permissions",
               "permissions/managing-permissions"
+            ]
+          },
+          {
+            "group": "Reporting",
+            "pages": [
+              "reporting/introduction",
+              "reporting/setup",
+              "reporting/data-sources",
+              "reporting/building-dashboards",
+              "reporting/viewing-dashboards"
             ]
           },
           {
