@@ -64,6 +64,7 @@
             "group": "Reporting",
             "pages": [
               "reporting/introduction",
+              "reporting/setup",
               "reporting/data-sources",
               "reporting/building-dashboards",
               "reporting/viewing-dashboards"

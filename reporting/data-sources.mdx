@@ -17,7 +17,7 @@ A data source has two states:
 - **Definition** — the query you author and save.
 - **Materialized snapshot** — the result set, captured into a snapshot table when you **refresh** the data source. Dashboards read from the snapshot, not from your live tables, so a heavy query runs only at refresh time and dashboards stay fast.
 
-Queries run under a dedicated **read-only reporting login**, not your own account. That login can only read the objects an administrator has granted it, which keeps reporting isolated from the rest of the system.
+Queries run under a dedicated **read-only reporting login**, not your own account. That login can only read the objects an administrator has granted it, which keeps reporting isolated from the rest of the system. They also run at a non-blocking (read-uncommitted) isolation level, so a heavy reporting query never locks or slows the live tables it reads.
 
 ## Create a data source
 
@@ -61,6 +61,9 @@ To keep reporting safe and predictable, queries are validated before they run:
   <Accordion title="Runs as the reporting login">
     The query executes under the read-only reporting login. If it references an object that login can't read, the test fails with a message pointing at the missing grant — ask an administrator to grant the reporting login access to that object, rather than changing your query.
   </Accordion>
+  <Accordion title="Allowed tables">
+    An administrator may pin reporting to a fixed set of source tables. When that allowlist is in place, a query that references any table not on it is rejected with a message naming the table (common table expressions are exempt). If you need a table that isn't allowed yet, ask an administrator to add it to the allowlist — and to grant the reporting login access to it.
+  </Accordion>
   <Accordion title="Preview is capped">
     Test results are capped to a small preview (up to 10 rows) so a large query stays responsive while you author it. This preview cap is separate from the data source's row cap; the full result set is captured when you refresh.
   </Accordion>
@@ -78,6 +81,10 @@ A data source refreshes automatically on its **schedule**, and you can also refr
 <Frame caption="A data source's schedule, row cap, and blackout window.">
   <img src="/images/reporting/datasource-editor-2.png" alt="The schedule section of the data source editor, showing the refresh schedule, preferred time, row cap, the Enabled toggle, and the blackout window start and end." />
 </Frame>
+
+<Note>
+  Changing a data source's **query or row cap** drops its current snapshot, so dashboards bound to it report the source as *stale* — with no data — until the next refresh. Click **Refresh now** after such an edit so its dashboards don't sit empty.
+</Note>
 
 <Tip>
   Test the query before saving. After saving, the next scheduled run picks it up — or click **Refresh now** if you can't wait.

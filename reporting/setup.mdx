@@ -1,0 +1,118 @@
+---
+title: "Setup & requirements"
+description: "What an operator must configure to stand up reporting dashboards on a tenant: feature flags, the dedicated read-only reporting login, database migrations, and permissions."
+icon: "sliders"
+---
+
+## What this page is for
+
+Reporting is opt-in per tenant. Before consultants can author data sources or build dashboards, an operator must enable the feature, provision a dedicated read-only database login, run the database migrations, and grant the reporting permissions. This page is the deployment checklist.
+
+<Warning>
+  Reporting requires a **dedicated read-only SQL login** of its own. The API **refuses to start** when reporting is enabled but that login's connection string is missing — provision it first. Consultant-authored SQL only ever runs under this login; there is no fallback to the application's primary database login.
+</Warning>
+
+## Feature flags
+
+Reporting is reachable end-to-end only when these are on. The two API flags live in the API `FeatureManagement` configuration; the client flag is a client environment variable.
+
+| Flag | Where | Effect when off |
+|---|---|---|
+| `EnableReportingDashboards` | API `FeatureManagement` | The whole feature is skipped — no services, no materialization worker, no schema initialization; reporting endpoints are unreachable |
+| `EnableReportingDashboardsAdministration` | API `FeatureManagement` | The viewer still works, but the administration endpoints (authoring data sources and dashboards) are rejected |
+| `FEATURE_PAGE_REPORTING` | Client environment (`.env.local`) | The reporting navigation and routes are hidden from the UI |
+
+`EnableReportingDashboards` must be enabled together with `EnableV3Endpoints` — reporting relies on the V3 surface and the permission system that only initializes when `EnableV3Endpoints` is on. The API throws a descriptive error at startup if reporting is on while `EnableV3Endpoints` is off.
+
+The client also needs `API_BASE_URL` pointed at the API; that is a general requirement, not specific to reporting.
+
+## The read-only reporting login
+
+This is the most important — and easiest to miss — setup step.
+
+Consultant-authored SQL **only ever executes under a dedicated, locked-down login**, configured through the `OnBaseReportingSourceReader` connection string. The query validator is a convenience layer; the login's GRANT set is the actual security boundary, so reporting never falls back to the application's primary login.
+
+<Steps>
+  <Step title="Provision the login">
+    Create a SQL login/user with **`SELECT` only** on the tables you want consultants to be able to report on — and nothing else. No write, schema, or execute rights. What this login can read is exactly what reporting can expose, regardless of what a consultant types.
+  </Step>
+  <Step title="Set the connection string">
+    Configure it as `ConnectionStrings:OnBaseReportingSourceReader`. If reporting is enabled and this value is absent or blank, the API **fails to start** with an error naming the missing connection string. The connection factory also throws (rather than degrading) if the value disappears at runtime.
+  </Step>
+  <Step title="Optionally pin the allowed tables">
+    `Reporting:SourceTableAllowlist` is an optional list of fully-qualified `schema.table` names. When set, the validator **rejects** any query that references a table not on the list (CTEs are exempt); leave it empty to rely solely on the login's grants. If you do set it, include **every** table consultants need and keep it in step with the login's `SELECT` grants.
+  </Step>
+</Steps>
+
+The application's primary `OnBaseDatabase` login is still used for everything else reporting does — creating the snapshot schema, writing materialized snapshots, and reading them back for the viewer — so it needs the usual read/write rights plus the ability to create tables in the reporting schema.
+
+## Database
+
+| Object | Created by | Notes |
+|---|---|---|
+| Reporting configuration tables (dashboards, data sources, materialization runs) | Database migration | Run migrations before enabling the feature |
+| The `reporting` schema and its snapshot tables | The API at startup, when the feature is on | Snapshot tables are built and swapped by the materialization worker per data source |
+
+Run the database migrations as part of the release, then enable the feature flags — the configuration tables must exist before reporting endpoints are used.
+
+## Permissions
+
+Reporting ships five permissions. They are seeded automatically; assign them to the customer's user groups.
+
+| Permission | Grants |
+|---|---|
+| **View Reporting Dashboards** (`reporting.dashboards.view`) | Open the viewer and see dashboards shared with your groups |
+| **Manage Reporting Dashboards** (`reporting.dashboards.manage`) | Create, edit, and delete dashboards |
+| **View Reporting Data Sources** (`reporting.datasources.view`) | See data source definitions and run history |
+| **Manage Reporting Data Sources** (`reporting.datasources.manage`) | Create, edit, delete, test, and refresh data sources |
+| **Reporting Administration** (`reporting.admin`) | Satisfies every `reporting.*` check — a single grant for full reporting access |
+
+Typical assignments:
+
+- **Consultant** (builds everything): *Manage Reporting Data Sources* + *Manage Reporting Dashboards*.
+- **Super user** (reads dashboards): *View Reporting Dashboards* — plus membership in a user group the dashboard was shared with. Both are required; see [Viewing dashboards](/reporting/viewing-dashboards).
+
+## The materialization worker
+
+Data sources are served from materialized snapshots, refreshed by a background worker. The worker has its own switch, separate from the feature flags:
+
+- **`Reporting:MaterializationEnabled`** — off by default. While off, no snapshots are built or refreshed, but the viewer keeps serving the last good snapshot for each data source. Turn it on once you're ready for reporting to start refreshing data.
+- **`Reporting:WorkerIntervalSeconds`** — how often the worker checks for data sources due to refresh (default 60).
+
+Refresh **schedules and blackout windows are set per data source**, not globally — see [Data sources](/reporting/data-sources). An optional global default blackout window (`Reporting:DefaultBlackoutStart` / `DefaultBlackoutEnd`) applies when a data source doesn't set its own.
+
+## Other settings
+
+These have working defaults; review them per tenant.
+
+| Setting | Default | Purpose |
+|---|---|---|
+| `Reporting:DefaultRowCap` | `10000` | Rows captured per refresh when a data source doesn't set its own cap |
+| `Reporting:PreviewRowCap` | `10` | Rows returned by the design-time **Test SQL** preview |
+| `Reporting:StaleMultiplier` | `2.0` | A snapshot is flagged stale after this multiple of its schedule interval |
+| `Reporting:DesignTimeCommandTimeoutSeconds` | `30` | Timeout for Test SQL preview queries |
+| `Reporting:MaterializationTimeoutSeconds` | `120` | Timeout for scheduled refresh queries |
+| `Reporting:ViewerCommandTimeoutSeconds` | `60` | Timeout for viewer reads of snapshots |
+
+## Bring-up order
+
+<Steps>
+  <Step title="Run the database migrations">
+    Creates the reporting configuration tables.
+  </Step>
+  <Step title="Provision the read-only login and set its connection string">
+    Create the locked-down `SELECT`-only login and set `ConnectionStrings:OnBaseReportingSourceReader`. Do this **before** enabling the feature, or the API won't start.
+  </Step>
+  <Step title="Enable the feature flags">
+    Turn on `EnableV3Endpoints`, `EnableReportingDashboards`, and `EnableReportingDashboardsAdministration` on the API, and `FEATURE_PAGE_REPORTING` on the client. On startup the API seeds the reporting permissions and creates the `reporting` schema.
+  </Step>
+  <Step title="Grant the reporting permissions">
+    Assign the reporting permissions to the appropriate user groups (consultant vs. super user, above).
+  </Step>
+  <Step title="Enable the materialization worker">
+    Set `Reporting:MaterializationEnabled` to `true` so snapshots build and refresh on schedule.
+  </Step>
+  <Step title="Verify">
+    As a consultant, create a [data source](/reporting/data-sources), run **Test SQL**, save and refresh it, then build a [dashboard](/reporting/building-dashboards) on top of it.
+  </Step>
+</Steps>
