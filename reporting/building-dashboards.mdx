@@ -7,7 +7,7 @@ icon: "pen-ruler"
 Dashboards are assembled in the **dashboard designer**: you add sections, drop rows of elements into them, and configure each element. This page walks through the whole flow.
 
 <Note>
-  This page is for **consultants**. Building and editing dashboards requires the **Reporting dashboards – Manage** permission. You'll also need at least one saved, refreshed [data source](/reporting/data-sources) to bind elements to.
+  This page is for **consultants**. Building and editing dashboards requires the **Manage Reporting Dashboards** permission. You'll also need at least one saved, refreshed [data source](/reporting/data-sources) to bind elements to.
 </Note>
 
 ## Create a dashboard
@@ -58,9 +58,9 @@ Every element starts with a **type** and a **data source**. The rest of the conf
     Pick a **display**, then fill in the fields for it. Every display also accepts an optional short **label** and card **title**.
 
     - **Number** — choose an **aggregate** (count, sum, average, min, or max) and, for anything other than count, the **value column** to aggregate. Pick a **number format**: integer, decimal, or percent.
-    - **Share** — choose a **column**, an **operator** (equals, not equals, contains, greater than, less than, is empty, is not empty), and a comparison **value** where the operator needs one. The card shows the percentage of rows that match, with a progress bar.
-    - **Gauge** — choose an aggregate and value column, set a **target**, and optionally add **threshold bands** (success / warning / error) that color the gauge based on the value.
-    - **Trend** — choose an aggregate and value column, a **date column** to measure over, and a **period** (month-over-month or year-over-year). The card shows the current period's total and the change versus the previous period.
+    - **Percentage** — choose a **column**, an **operator** (equals, not equals, contains, greater than, less than, is empty, is not empty), and a comparison **value** where the operator needs one. The card shows the percentage of rows that match, with a progress bar.
+    - **Gauge** — choose an aggregate and value column, set a **target**, and optionally add **color bands**: each band colors the gauge **Green**, **Amber**, or **Red** up to a threshold value.
+    - **Trend** — choose an aggregate and value column, a **date column** to measure over, and a **comparison period** (*This month vs last month* or *This year vs last year*). The card shows the current period's total and the change versus the previous period.
   </Accordion>
   <Accordion title="Data grid" icon="table">
     - **Columns** — leave empty to show every column, or list specific columns; the order you list them is the column order shown.
@@ -73,6 +73,8 @@ Every element starts with a **type** and a **data source**. The rest of the conf
     - **Group-by column** — the category each slice or bar represents.
     - **Aggregate** — count, sum, or average. For sum and average, also pick the **value column** to aggregate.
     - **Time bucket** (bar charts only) — when the group-by column is a date, bucket it by day, week, month, quarter, or year.
+    - **Title** — an optional heading shown above the chart.
+    - **Click action** — like a data grid, optionally make a slice or bar open the related record (a Caseflow object, a document, or a URL built from the row's values).
   </Accordion>
 </AccordionGroup>
 

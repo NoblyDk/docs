@@ -7,7 +7,7 @@ icon: "chart-mixed"
 This page is for **super users** — anyone who reads and explores a dashboard a consultant has built. You don't need to know how a dashboard was made to get value from it.
 
 <Note>
-  You'll see a dashboard in your list if you belong to a user group it was shared with. If a dashboard you expect is missing, ask the consultant who built it to add your group.
+  You'll see a dashboard in your list if you have the **View Reporting Dashboards** permission and belong to a user group it was shared with. If a dashboard you expect is missing, check that you have both — ask an administrator about the permission, and the consultant who built the dashboard to add your group.
 </Note>
 
 ## Open a dashboard
@@ -35,7 +35,7 @@ The **date range** control applies to every element at once. Choose a preset:
 - **Last 7 days**, **Last 30 days**, **Last 90 days**
 - **This month**, **This year**
 
-Each element finds its own date column and keeps only the rows inside the window. Elements that have no date column are left unchanged. The selected range is kept in the page address, so a link you copy reopens with the same range — if that range doesn't match a preset, it shows as **Custom**.
+Each element finds its own date column and keeps only the rows inside the window. Elements that have no date column are left unchanged. The selected range is kept in the page address, so a link you copy reopens with the same range — if that range doesn't match a preset, it shows as **Custom range**.
 
 <Frame caption="Choosing a date range scopes every element on the dashboard.">
   <img src="/images/reporting/viewer-date-filter.png" alt="The date range dropdown open in the dashboard header, showing the preset options." />
@@ -49,7 +49,7 @@ Each element finds its own date column and keeps only the rows inside the window
 
 <AccordionGroup>
   <Accordion title="Drill down across the dashboard" icon="filter">
-    Click a slice in a pie chart or a bar in a bar chart to **drill down**: every other element that uses the same data source narrows to that selection, so you can study one segment in context. The chart you clicked highlights your selection and offers a **Clear** action to remove it.
+    Click a slice in a pie chart or a bar in a bar chart to **drill down**: every other element that uses the same data source narrows to that selection, so you can study one segment in context. The chart you clicked highlights your selection and offers a **Clear drill-down** action to remove it.
   </Accordion>
   <Accordion title="Read a pie chart" icon="chart-pie">
     When a column has many categories, the smallest ones are grouped into a single **Other** slice so the chart stays readable. **Hover the Other slice** to see the categories behind it, and read each slice's value from the legend.
@@ -69,12 +69,18 @@ Each element finds its own date column and keeps only the rows inside the window
 ## Export
 
 - **Export all** (header) — every table on the dashboard, in one workbook, scoped to the active date range.
-- **Export** on a single grid — just that table, with your current sorting and the active date range applied.
+- **Export XLSX** on a single grid — just that table, with your current sorting and the active date range applied.
 
 <Tip>
   Set your date range before exporting — the workbook reflects whatever range is active, so it matches what you see on screen.
 </Tip>
 
+<Note>
+  If a data source holds more rows than its row cap, the export covers only the captured rows and warns that it may be incomplete. Ask the consultant who owns the data source to raise its row cap if you need the full set.
+</Note>
+
 ## Keeping data current
 
 If the numbers look out of date, check the **freshness** indicator. **Refresh** reloads the latest available data, but the underlying snapshot is only as current as the last time a consultant refreshed its [data source](/reporting/data-sources). If it's still stale after a refresh, ask the consultant who owns that data source to refresh it.
+
+Besides *Updated …*, an element's freshness can read **Awaiting first run** (never materialized yet), **Stale** (overdue for a refresh), **Schema drift detected** (the query's columns changed at the last refresh), or **Last run failed**. For any of these, the consultant who owns the data source is the person to contact.

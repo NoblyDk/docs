@@ -7,7 +7,7 @@ icon: "database"
 A **data source** is a named, saved query that returns the rows and columns a dashboard element displays. You author it once, and every element that needs that data points at it.
 
 <Note>
-  This page is for **consultants**. Creating and editing data sources requires the **Reporting data sources – Manage** permission. With **View** only, you can see existing data sources but not change them.
+  This page is for **consultants**. Creating and editing data sources requires the **Manage Reporting Data Sources** permission. With **View Reporting Data Sources** only, you can see existing data sources but not change them.
 </Note>
 
 ## How a data source works
@@ -33,7 +33,7 @@ Queries run under a dedicated **read-only reporting login**, not your own accoun
     Give it a clear, descriptive name — this is what consultants pick from when adding an element.
   </Step>
   <Step title="Write the query">
-    Enter a `SELECT` query that returns the columns you want to report on. Keep it to the columns you need: the column names become the field names available to every element.
+    Enter a `SELECT` query that returns the columns you want to report on. Keep it to the columns you need: the column names become the field names available to every element. Common table expressions (`WITH … SELECT`) are supported for structuring more complex queries.
   </Step>
   <Step title="Test it">
     Click **Test SQL**. Nobly Insight validates the query, executes it under the reporting login with a preview row cap, and shows you the resulting columns and a sample of rows — so you can confirm the shape before saving.
@@ -46,7 +46,7 @@ Queries run under a dedicated **read-only reporting login**, not your own accoun
     Save the data source. It is now selectable when designing dashboards.
   </Step>
   <Step title="Set a schedule and refresh">
-    Pick a refresh **schedule** (for example, *Hourly*) and a **row cap**, then use **Refresh now** to materialize the snapshot for the first time. After that, the data source refreshes on its schedule. Until the first refresh, elements bound to the source show a *not materialized yet* message.
+    Pick a refresh **schedule** (for example, *Hourly*) and a **row cap**, then use **Refresh now** to materialize the snapshot for the first time. After that, the data source refreshes on its schedule. Until the first refresh, elements bound to the source show a *Never run* (or *Awaiting first run*) freshness state.
   </Step>
 </Steps>
 
@@ -56,24 +56,24 @@ To keep reporting safe and predictable, queries are validated before they run:
 
 <AccordionGroup>
   <Accordion title="Read-only">
-    Only read queries are allowed. Statements that change data or schema are rejected at validation.
+    Only read queries are allowed. Statements that change data or schema are rejected at validation. A few read-only constructs are also blocked for safety — linked-server and cross-database access, `OPENROWSET`, `EXEC`, and query hints among them — so if validation rejects a query it considers unsafe, the message names the construct to remove.
   </Accordion>
   <Accordion title="Runs as the reporting login">
     The query executes under the read-only reporting login. If it references an object that login can't read, the test fails with a message pointing at the missing grant — ask an administrator to grant the reporting login access to that object, rather than changing your query.
   </Accordion>
   <Accordion title="Preview is capped">
-    Test results are capped to a preview number of rows so a large query stays responsive while you author it. The full result set is captured when you refresh.
+    Test results are capped to a small preview (up to 10 rows) so a large query stays responsive while you author it. This preview cap is separate from the data source's row cap; the full result set is captured when you refresh.
   </Accordion>
 </AccordionGroup>
 
 ## Refresh and freshness
 
-A data source refreshes automatically on its **schedule**, and you can also refresh it on demand with **Refresh now**. Each refresh re-captures the snapshot under the row cap you set; if the query's columns have changed since the last refresh, the snapshot table is rebuilt to match — the refresh still succeeds, with a notice that the structure was updated.
+A data source refreshes automatically on its **schedule**, and you can also refresh it on demand with **Refresh now**. Each refresh re-captures the snapshot under the row cap you set; if the query's columns have changed since the last refresh, the snapshot table is rebuilt to match — the refresh still succeeds, and the element's freshness then shows *Schema drift detected*.
 
 - **Schedule** — pick how often the data source refreshes (for example, *Hourly*). Set a **Preferred time (UTC)** when relevant, and use the **Enabled** toggle to pause scheduled runs.
-- **Row cap** — the maximum rows captured per refresh. Leave at zero to use the server default.
+- **Row cap** — the maximum rows captured per refresh. Leave at zero to use the server default. If a source has more rows than the cap, dashboards read only the captured rows and elements show a notice that totals, charts, and exports may be incomplete — raise the cap for sources that need the full set.
 - **Blackout window** — scheduled runs skip when they would fall inside this window (for example, during a nightly maintenance window). **Manual refresh is not affected.**
-- **Freshness** — every dashboard element shows when its source was last refreshed (for example, *Updated 2 hours ago*), so viewers know how current the numbers are.
+- **Freshness** — every dashboard element shows when its source was last refreshed (for example, *Updated 2 hr ago*), so viewers know how current the numbers are.
 
 <Tip>
   Test the query before saving. After saving, the next scheduled run picks it up — or click **Refresh now** if you can't wait.
