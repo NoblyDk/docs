@@ -1,0 +1,100 @@
+---
+title: "References & expressions"
+description: "The reference catalog, templating syntax, and JSONLogic conditions used in workflow action parameters, guards, and trigger filters."
+icon: "code"
+---
+
+## Three places, three syntaxes
+
+Expressions show up in three contexts, each with its own form:
+
+| Context | Syntax | Example |
+|---|---|---|
+| **Prose templating** — free-text parameters like an email body or note text | `{{ reference }}` inside the text | `Approved by {{identity.username}}` |
+| **Computed values** — action value parameters | `{{= JSONLogic =}}` wrapping a whole value | `{{= { "var": "instance.amount" } =}}` |
+| **Conditions** — transition guards and trigger filters | Raw JSONLogic, no wrapper | `{ ">=": [ { "var": "instance.amount" }, 10000 ] }` |
+
+In the designer, body fields open a template editor: typing `{{` brings up autocomplete with every reference available to the workflow — instance variables, keywords or attributes from the scope, identity, environment variables, and secrets.
+
+The body inside `{{= … =}}` must be valid JSON. A constant string therefore keeps its quotes — `{{= "Approved" =}}`, not `{{= Approved =}}`.
+
+## What you can reference
+
+The available references depend on the workflow's anchor and scope:
+
+| Reference | Meaning |
+|---|---|
+| `instance.<name>` | A workflow variable — set by `Property.Set`, a task input, an action's `IntoVariable`, or a parent workflow's `SetVars` |
+| `document.id` / `object.id` | The anchor's ID |
+| `document.kw.<Name>` | A standalone keyword — always a **list** (see cardinality below) |
+| `document.group.<Name>` | A keyword group — a record, or a list of records for multi-instance groups |
+| `object.attr.<Name>` | A WorkView attribute — single-valued, keeps its native type |
+| `identity.username` | The user whose action triggered the current step |
+| `env.<name>` | A configured environment variable (plain text) |
+| `secrets.<name>` | A secret — usable in action parameters only, **never in guards or filters** |
+
+<Note>
+Instances start from events with an empty variable bag, so `instance.<name>` only resolves after something in the workflow has set it. An unset variable resolves to null — a guard reading it will silently misfire. Read from the document or object when in doubt.
+</Note>
+
+## Keywords are lists — cardinality rules
+
+The most common source of subtly wrong conditions. A standalone keyword is **always a list**, even when the keyword type holds a single value:
+
+| You want | JSONLogic |
+|---|---|
+| The (first) value | `{"var": "document.kw.Status.0"}` |
+| The whole list | `{"var": "document.kw.Status"}` |
+| How many values | `{"count": [{"var": "document.kw.Status"}]}` |
+| "Is X one of the values" | `{"in": ["X", {"var": "document.kw.Status"}]}` |
+
+Comparing the whole list to a scalar (`{"==": [{"var": "document.kw.Status"}, "X"]}`) is flagged by validation — use `.0` or `in` instead.
+
+Keyword groups follow the same pattern one level deeper. A single-instance group is a record whose fields are themselves lists (`document.group.Address.City.0`); a multi-instance group is a list of records (`document.group.LineItems.0.Amount.0` is the first line item's first amount). WorkView attributes are single-valued — compare them directly, no `.0`.
+
+Keyword values are usually text. `==` coerces types and `===` is strict; when comparing to a number, convert first with `toNumber`.
+
+## Trigger filters
+
+A trigger filter runs **before any instance exists**, so it evaluates against the event rather than workflow state:
+
+- Document events expose `document.documentId`, `document.documentTypeId`, `document.documentTypeName`, plus `document.keywords.<Name>` and `document.groups.<Name>` — note the namespace differs from the in-workflow `document.kw.<Name>` form
+- WorkView events expose the event's payload fields directly
+- `instance.*` and `secrets.*` are not available
+
+```json
+{ "in": ["Pending", { "var": "document.keywords.Status" }] }
+```
+
+To start a workflow on every in-scope event, simply omit the filter.
+
+## Operators
+
+Conditions and computed values use JSONLogic with the standard operators (`if`, `and`, `or`, `==`, `===`, `<`, `+`, `cat`, `in`, `map`, `reduce`, …) plus a set of Nobly operators:
+
+| Category | Operators |
+|---|---|
+| Strings | `len`, `trim`, `upper`, `lower`, `left`, `right`, `mid`, `replace`, `contains`, `startsWith`, `endsWith`, `regexTest`, `regexFind`, `pad` |
+| Existence | `isNull`, `isEmpty`, `coalesce` |
+| Numbers | `toNumber`, `formatNumber`, `min`, `max` |
+| Lists & records | `count`, `recordOf`, `index` |
+| Dates (UTC, ISO 8601) | `now`, `today`, `parseDate`, `addDays`, `addHours`, `addMonths`, `dateDiff`, `formatDate`, `year`, `month`, `day` |
+
+Comparisons (`<`, `<=`, `>`, `>=`) are date-aware, and `<` supports the three-argument "between" form.
+
+## Rules that bite
+
+- **Variables are namespaced.** A workflow variable is `{"var": "instance.amount"}` — never bare `{"var": "amount"}`.
+- **Secrets never appear in guards or filters.** Referencing `secrets.*` in a condition is a publish-blocking error; this prevents secret values leaking through observable branching.
+- **References are validated advisorily.** Publish checks keyword, group, and attribute names against the workflow's scope and warns on anything it can't resolve — fix the typo or the scope.
+
+## Where to read next
+
+<Card
+  title="Action reference"
+  icon="bolt"
+  href="/workflows/actions"
+  horizontal
+>
+  The parameters these expressions feed into.
+</Card>

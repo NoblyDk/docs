@@ -1,0 +1,78 @@
+---
+title: "Introduction to Workflows"
+description: "Understand how the Nobly Insight workflow engine automates document and case processes — definitions, triggers, nodes, actions, and tasks."
+icon: "diagram-project"
+---
+
+## What is the workflow engine?
+
+The workflow engine moves documents and business objects through configurable, auditable processes. A consultant designs a workflow once — events then start instances automatically, actions run without user involvement, and human decisions surface as tasks in users' inboxes.
+
+A workflow is built from a small set of concepts:
+
+- **Definition** — the workflow itself: a named, versioned graph of nodes and transitions
+- **Anchor** — what the workflow operates on: either a **document** or a **WorkView object** (a [Caseflow](/caseflow/introduction) business object)
+- **Scope** — the document types, or the application and class, the workflow is allowed to touch
+- **Triggers** — the events that start an instance (for example, a document is created or its keywords change)
+- **Nodes** — the steps of the process; each node can run actions when an instance arrives
+- **Transitions** — the edges between nodes; fired automatically, after a timer, or by a user completing a task
+- **Actions** — the side effects: update keywords, send an email, add a note, run a script, start another workflow
+- **Instance** — one run of the workflow for one document or object
+- **Tasks** — the human decision points; they appear in the Tasks page as buttons, optionally with a small form
+
+## How a workflow runs
+
+1. A matching event arrives — the right type, inside the workflow's scope, passing the trigger's filter
+2. The engine starts an instance at the workflow's initial node (only one active instance per workflow per document/object)
+3. The node's on-enter actions run
+4. The engine evaluates the node's transitions: automatic transitions fire immediately when their condition passes, timer transitions fire after a delay, and task transitions wait for a user
+5. The instance moves from node to node until it reaches a terminal node and completes
+
+If an action fails, the instance routes to a designated error node — or is marked **Failed** and can be replayed by an administrator.
+
+## User surfaces
+
+<Columns cols={2}>
+  <Card title="Workflow Designer" icon="pen-ruler" href="/workflows/designer">
+    Visual canvas (or raw JSON view) for building workflows: nodes, transitions, triggers, actions, validation, and publishing. Under **Settings → Admin → Workflow**.
+  </Card>
+  <Card title="Workflow Definitions" icon="list" href="/workflows/monitoring">
+    Admin list of every workflow with status (Draft/Published), anchor type, and version history.
+  </Card>
+  <Card title="Workflow Instances" icon="chart-line" href="/workflows/monitoring">
+    Admin search across running, failed, and completed instances — with variables, a full history timeline, and replay for failures.
+  </Card>
+  <Card title="Tasks page" icon="list-check" href="/workflows/tasks">
+    The end-user inbox: every task a user is allowed to act on, with a document or object preview and one-click or form-based completion.
+  </Card>
+  <Card title="Search results" icon="magnifying-glass" href="/workflows/tasks#workflow-badges-in-search-results">
+    Documents and objects currently in a workflow carry a badge in search results; hovering shows the workflow and step they're in.
+  </Card>
+</Columns>
+
+## Who does what
+
+| Audience | What they use |
+|---|---|
+| **Consultants / administrators** | Build and publish workflows in the [designer](/workflows/designer), wire up [actions](/workflows/actions) and [expressions](/workflows/expressions), and [monitor instances](/workflows/monitoring) |
+| **End users** | Complete [tasks](/workflows/tasks) from the Tasks page and see workflow badges in search results — no configuration knowledge needed |
+
+## Where to read next
+
+<Card
+  title="Building workflows in the designer"
+  icon="pen-ruler"
+  href="/workflows/designer"
+  horizontal
+>
+  Create a definition, add nodes and transitions, configure triggers, validate, and publish.
+</Card>
+
+<Card
+  title="Tasks & the end-user experience"
+  icon="list-check"
+  href="/workflows/tasks"
+  horizontal
+>
+  What workflows look like for the people who complete tasks and search for documents.
+</Card>

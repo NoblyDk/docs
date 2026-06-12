@@ -1,0 +1,100 @@
+---
+title: "Action reference"
+description: "Every workflow action — keywords, documents, WorkView objects, variables, email, scripts, and workflow control — with parameters and behavior."
+icon: "bolt"
+---
+
+## How actions work
+
+Actions are the side effects of a workflow. You define them once in the definition's **Actions** tab, then reference them from a node's **On Enter** chain or from a transition's action chain. Chains run in order; if an action fails, the instance's variables roll back to their node-entry state and the instance routes to the error node (or is marked **Failed**).
+
+A few conventions apply across the catalog:
+
+- **Value parameters accept expressions.** Anything marked *expr* below can be a literal, a `{{ reference }}`, or a computed `{{= JSONLogic =}}` expression — see [References & expressions](/workflows/expressions).
+- **Actions target the anchor by default.** Document and WorkView actions accept an optional `DocumentId` / `ObjectId` parameter; leave it empty to act on the workflow's own document or object, or supply an expression (for example an ID read from a keyword) to act on a **related** document or object. The accompanying `TargetDocumentTypeId` / `TargetClassId` setting tells the designer which type the related target is, so its pickers offer the right keywords or attributes — it has no runtime effect.
+- **Some actions capture output.** Actions with an `IntoVariable` parameter store their result as an instance variable for later steps to read as `instance.<name>`.
+
+## Keyword actions (document workflows)
+
+| Action | Parameters | What it does |
+|---|---|---|
+| `Keyword.Add` | `KeywordTypeId`, `Value` (expr), `DocumentId?` | Appends a value to a multi-value keyword |
+| `Keyword.Update` | `KeywordTypeId`, `Value` (expr), `DocumentId?` | Sets a single-value keyword; skipped if the value resolves empty |
+| `Keyword.Remove` | `KeywordTypeId`, `Value` (expr), `DocumentId?` | Removes one specific value from a keyword |
+| `Keyword.RemoveByType` | `KeywordTypeId`, `DocumentId?` | Clears all values of a keyword type |
+| `Keyword.SetGroup` | `GroupId`, `Keywords` (list of `KeywordTypeId` + `Value`), `DocumentId?` | Replaces a single-instance keyword group |
+| `Keyword.SetMultiGroup` | `GroupId`, `Instances` (list of keyword lists), `DocumentId?` | Replaces all instances of a multi-instance keyword group |
+| `Keyword.AddGroupInstance` | `GroupId`, `Keywords` (list), `DocumentId?` | Appends one instance to a multi-instance keyword group |
+
+## Document actions (document workflows)
+
+| Action | Parameters | What it does |
+|---|---|---|
+| `Document.AddNote` | `Text` (expr), `NoteTypeId?`, `DocumentId?` | Attaches a note to the document; uses the default note type when none is given |
+| `Document.Delete` | `DocumentId?` | Soft-deletes the document to the trashcan |
+| `Document.Reindex` | `TargetDocumentTypeId`, `DocumentId?` | Changes the document's type |
+
+## WorkView actions (WorkView workflows)
+
+| Action | Parameters | What it does |
+|---|---|---|
+| `Workview.SetAttribute` | `AttributeId`, `Value?` (expr), `ObjectId?` | Sets one attribute; omit the value to clear it |
+| `Workview.SetMultipleAttributes` | `Attributes` (list of `AttributeId` + `Value`), `ObjectId?` | Sets several attributes in one call |
+| `Workview.CreateObject` | `ClassId`, `Attributes` (list), `IntoVariable` | Creates a new object and stores its ID in an instance variable |
+| `Workview.DeleteObject` | `ObjectId?` | Soft-deletes the object |
+
+## Variable actions
+
+| Action | Parameters | What it does |
+|---|---|---|
+| `Property.Set` | `Name`, `Value?` (expr) | Sets an instance variable; omit the value to clear it |
+| `Property.Get` | `From`, `Into` | Copies one instance variable to another |
+| `Property.Increment` | `Name`, `By` (default 1) | Increments a numeric variable; a missing variable starts at 0 |
+
+## Email
+
+| Action | Parameters | What it does |
+|---|---|---|
+| `Email.Send` | `Host`, `Port` (default 587), `UseTls` (default true), `Username?`, `Password?`, `From`, `To`, `Cc?`, `Bcc?`, `Subject` (expr), `Body` (expr), `IsHtml` (default false) | Sends an email over SMTP. `To` accepts a comma-separated list. |
+
+<Warning>
+Never hardcode SMTP credentials in the definition. Reference configuration instead: `{{ env.smtp_host }}` for the host and user, and `{{ secrets.smtp_password }}` for the password. Secrets are encrypted at rest and never written to instance history.
+</Warning>
+
+The email **Body** field uses the template editor with `{{ }}` autocomplete, so you can mix prose with references:
+
+```text
+Invoice {{document.kw.InvoiceNumber}} was approved by {{identity.username}}.
+```
+
+## Workflow control
+
+| Action | Parameters | What it does |
+|---|---|---|
+| `Workflow.Start` | `DefinitionId`, `Version?` (omit for latest published), `SetVars?`, `AnchorDocumentId?`, `AnchorWorkviewId?`, `IntoVariable?` | Starts a child workflow and continues immediately (fire-and-forget). The child inherits the parent's anchor unless an anchor parameter overrides it; `SetVars` seeds its variables; `IntoVariable` captures the child instance's ID. Spawn cycles and duplicate active instances are rejected. |
+| `Workflow.End` | `Reason?` | Completes the instance immediately; the optional reason lands in the history |
+
+## Scripts
+
+| Action | Parameters | What it does |
+|---|---|---|
+| `Script.Run` | `ScriptSlug`, `EntityId?` (defaults to the anchor), `Input?` (expr), `TriggerEvent?`, `IntoVariable?` | Runs a script in the script engine and optionally captures its output as an instance variable. Workflow scripts run under the engine's service account with a 10-second timeout. |
+
+To pass a structured input, build a record with the `recordOf` operator:
+
+```json
+{ "recordOf": ["invoiceId", { "var": "document.kw.InvoiceNumber.0" }, "amount", 1000] }
+```
+
+See [Extensibility](/features/extensibility) for how scripts themselves are written and managed.
+
+## Where to read next
+
+<Card
+  title="References & expressions"
+  icon="code"
+  href="/workflows/expressions"
+  horizontal
+>
+  How to write the values, conditions, and templates these parameters accept.
+</Card>
