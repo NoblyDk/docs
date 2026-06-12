@@ -1,0 +1,60 @@
+---
+title: "Tasks & the end-user experience"
+description: "How end users see workflows — the Tasks page, completing tasks with one click or a form, and workflow badges in search results."
+icon: "list-check"
+---
+
+## The Tasks page
+
+When a workflow parks at a node with task transitions, those tasks appear in the **Tasks** page in the main navigation — the inbox for everything the signed-in user is allowed to act on. Tasks gated to specific user groups are only visible to members of those groups.
+
+The page follows the familiar three-panel search layout:
+
+<Columns cols={2}>
+  <Card title="Filters" icon="filter">
+    Narrow the list by **workflow**, by **step** (node, grouped per workflow), and by **age** (today, last 7 days, older). Sort newest- or oldest-first.
+  </Card>
+  <Card title="Task list" icon="table-list">
+    One row per item in a workflow, showing the workflow name, the document or object it concerns, the current step, and the available task buttons. The list loads more as you scroll.
+  </Card>
+  <Card title="Preview" icon="eye">
+    Selecting a task previews its document (viewer, keywords, and notes) or its WorkView object (rendered through its template). Items anchored to both show a Document/WorkView tab strip.
+  </Card>
+</Columns>
+
+Everywhere in the Tasks page, workflows and steps appear by their **display names** — internal identifiers never surface to end users.
+
+## Completing a task
+
+A task is a button configured by the workflow author — with a label, a color (primary, neutral, or critical), and optionally an icon.
+
+- **One-click tasks** open a short confirmation dialog.
+- **Form tasks** open a dialog with the fields the author defined — text, number, checkbox, or date — with required fields marked. Validation errors appear inline under the matching field.
+
+Completing the task fires the workflow's transition: any transition actions run and the instance moves to the next step. The task then disappears from everyone's list.
+
+If two people act on the same task at the same time, the first completion wins; the second user is told the task was already completed and the list refreshes.
+
+## Workflow badges in search results
+
+Documents and WorkView objects that are currently in a running workflow carry a small badge on their icon in search results (with a count when the item is in several workflows). Hovering shows, for each workflow, the **workflow name** and the **step** the item is currently on — so a caseworker can tell at a glance whether a document is already being handled, and where it is in the process.
+
+## Where to read next
+
+<Card
+  title="Building workflows in the designer"
+  icon="pen-ruler"
+  href="/workflows/designer"
+  horizontal
+>
+  How the task buttons, forms, and visibility rules behind this page are configured.
+</Card>
+
+<Card
+  title="Search"
+  icon="magnifying-glass"
+  href="/features/search"
+  horizontal
+>
+  The search experience the workflow badges live in.
+</Card>

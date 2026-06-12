@@ -62,6 +62,17 @@
             ]
           },
           {
+            "group": "Workflows",
+            "pages": [
+              "workflows/introduction",
+              "workflows/designer",
+              "workflows/actions",
+              "workflows/expressions",
+              "workflows/tasks",
+              "workflows/monitoring"
+            ]
+          },
+          {
             "group": "Document types & keywords",
             "pages": [
               "configuration/introduction",

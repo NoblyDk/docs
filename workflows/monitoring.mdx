@@ -1,0 +1,92 @@
+---
+title: "Monitoring & administration"
+description: "Track workflow instances, read the history timeline, handle failures with error nodes and replay, and manage environment variables and secrets."
+icon: "chart-line"
+---
+
+All administration pages live under **Settings → Admin → Workflow** and require administrator access.
+
+## Workflow Definitions
+
+The **Workflow Definitions** page lists every workflow with its name, ID, status badge (**Draft** / **Published**), anchor type, and creation and publish timestamps. Filter by name, status, or anchor type; click a row to open it in the [designer](/workflows/designer).
+
+## Workflow Instances
+
+The **Workflow Instances** page searches across every run of every workflow. Filter by:
+
+- **Workflow** (multi-select)
+- **Status** — `Running`, `Failed`, or `Completed`
+- **Anchor** — document or WorkView, optionally a specific ID (to answer "what workflows touched this document?")
+- **Date range**
+
+Results show the workflow, the current step (by display name), status, timestamps, and the anchored document or object, loading more as you scroll.
+
+### Instance detail
+
+Opening an instance shows everything about the run:
+
+- **Variables** — the instance's current variable bag
+- **Live tasks** — task transitions currently waiting for a user
+- **Timers** — armed timer transitions and when they fire
+- **History** — the full append-only audit timeline
+
+Each history event records what happened, where (node and action), who caused it (the user, or the service account for automated steps), and when:
+
+| Event | Meaning |
+|---|---|
+| `instance.created` | The run started — records the trigger, seed variables, and definition version |
+| `node.entered` / `node.exited` | The instance arrived at / left a step |
+| `transition.fired` | An edge was taken |
+| `action.started` / `action.completed` / `action.failed` | An action ran |
+| `instance.completed` | A terminal node was reached (or `Workflow.End` ran) |
+| `instance.failed` | The run halted on a failure with no error node to absorb it |
+| `instance.replayed` | An administrator replayed a failed run |
+
+## Handling failures
+
+When an action fails:
+
+1. The instance's variables roll back to their state at node entry
+2. The instance routes to the **error node** — the node-level override if set, otherwise the workflow-level one — with two variables describing the failure: `instance._error.action` (which action failed) and `instance._error.message` (why)
+3. If no error node is configured, the instance is marked **Failed**
+
+A failed instance is never lost: from the instances list you can **retry** it, or **replay** it — optionally correcting variables first when bad data caused the failure. The engine does not retry automatically, so design error nodes for the failures you expect (for example, a task transition asking someone to fix a keyword and try again) and use replay for the rest.
+
+## Environment variables and secrets
+
+The **Workflow Variables** page manages the configuration workflows reference:
+
+- **Environment variables** (`env.<name>`) — plain-text settings such as an SMTP host, shared by all workflows
+- **Secrets** (`secrets.<name>`) — encrypted at rest, decrypted only at the moment an action parameter is resolved, never written to history, and audit-logged on access. Secrets cannot be used in guards or trigger filters.
+
+Keeping host names and credentials here — rather than hardcoded in definitions — lets the same definition move between environments unchanged.
+
+## Troubleshooting
+
+| Symptom | Likely cause | What to do |
+|---|---|---|
+| Events happen but no instance starts | The workflow is a draft, the item is outside the scope, the trigger filter doesn't match, or an active instance already exists for that item | Publish the workflow; check scope and filter against the event; look for the existing instance |
+| An instance sits on a node forever | A non-terminal node with no passing transition — guards are evaluated once on node entry | Check the node's transitions and guards; validation warns about nodes with no outgoing transitions |
+| An instance is `Failed` | An action failed and no error node was configured | Open the history to find the `action.failed` event, fix the cause, then replay |
+| A user can't see a task | The task's **Visible to** groups don't include them | Check the transition's visibility groups against the user's group membership |
+| An email action fails | SMTP settings missing or wrong | Confirm the `env.*` / `secrets.*` values the action references exist on the Workflow Variables page |
+
+## Where to read next
+
+<Card
+  title="Building workflows in the designer"
+  icon="pen-ruler"
+  href="/workflows/designer"
+  horizontal
+>
+  Error nodes, validation, and the publish flow these pages monitor.
+</Card>
+
+<Card
+  title="Administration & governance"
+  icon="gear"
+  href="/features/administration"
+  horizontal
+>
+  Platform-wide audit, permissions, and observability.
+</Card>
