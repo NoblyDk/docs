@@ -10,7 +10,7 @@ Actions are the side effects of a workflow. You define them once in the definiti
 
 A few conventions apply across the catalog:
 
-- **Value parameters accept expressions.** Anything marked *expr* below can be a literal, a `{{ reference }}`, or a computed `{{= JSONLogic =}}` expression — see [References & expressions](/workflows/expressions).
+- **Value parameters accept expressions.** Anything marked *expr* below can be a literal, contain `{{ references }}`, or be switched to expression mode and computed with a [formula](/workflows/expressions) like `$instance.retries + 1`.
 - **Actions target the anchor by default.** Document and WorkView actions accept an optional `DocumentId` / `ObjectId` parameter; leave it empty to act on the workflow's own document or object, or supply an expression (for example an ID read from a keyword) to act on a **related** document or object. The accompanying `TargetDocumentTypeId` / `TargetClassId` setting tells the designer which type the related target is, so its pickers offer the right keywords or attributes — it has no runtime effect.
 - **Some actions capture output.** Actions with an `IntoVariable` parameter store their result as an instance variable for later steps to read as `instance.<name>`.
 
@@ -80,10 +80,10 @@ Invoice {{document.kw.InvoiceNumber}} was approved by {{identity.username}}.
 |---|---|---|
 | `Script.Run` | `ScriptSlug`, `EntityId?` (defaults to the anchor), `Input?` (expr), `TriggerEvent?`, `IntoVariable?` | Runs a script in the script engine and optionally captures its output as an instance variable. Workflow scripts run under the engine's service account with a 10-second timeout. |
 
-To pass a structured input, build a record with the `recordOf` operator:
+To pass a structured input, write an object literal in the formula editor:
 
-```json
-{ "recordOf": ["invoiceId", { "var": "document.kw.InvoiceNumber.0" }, "amount", 1000] }
+```text
+{ invoiceId: $document.kw.InvoiceNumber.Value, amount: 1000 }
 ```
 
 See [Extensibility](/features/extensibility) for how scripts themselves are written and managed.

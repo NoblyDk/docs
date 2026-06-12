@@ -67,7 +67,7 @@ A node is one step of the process. Each node has:
 
 A transition connects one node to another. Select an edge to configure it in the property panel:
 
-- **Guard** — an optional [JSONLogic condition](/workflows/expressions); the transition is only available when it evaluates truthy. Guards are evaluated once, when the instance enters the node.
+- **Guard** — an optional [condition](/workflows/expressions), written in the formula editor (for example `$instance.amount >= 10000`); the transition is only available when it evaluates truthy. Guards are evaluated once, when the instance enters the node.
 - **Actions** — an ordered chain that runs when the transition fires, before the target node is entered.
 - **Kind** — one of three:
 
@@ -102,12 +102,12 @@ An instance starts when **all three gates** pass:
 
 1. The event type matches the trigger
 2. The item is inside the workflow's scope
-3. The trigger's optional **filter** (raw JSONLogic against the event) evaluates truthy — no filter means every in-scope event of that type starts an instance
+3. The trigger's optional **filter** (a [formula condition](/workflows/expressions#trigger-filters) against the event) evaluates truthy — no filter means every in-scope event of that type starts an instance
 
 Only one active instance per workflow per document/object exists at a time; events for an item that already has a running instance of that workflow do not start a second one.
 
 <Note>
-A trigger filter runs before any instance exists, so it reads the event — not workflow state. Document filters use `document.keywords.<Name>` (note: not the in-workflow `document.kw.<Name>` form) plus event fields like `document.documentTypeId`. See [filter references](/workflows/expressions#trigger-filters) for the details.
+A trigger filter runs before any instance exists, so it reads the event — not workflow state. Document filters use `$document.keywords.<Name>` (note: not the in-workflow `$document.kw.<Name>` form) plus event fields like `$document.documentTypeId`. See [filter references](/workflows/expressions#trigger-filters) for the details.
 </Note>
 
 ## Validation and publishing
