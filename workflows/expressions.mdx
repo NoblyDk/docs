@@ -32,7 +32,7 @@ $document.kw.Status.Value == "Approved" and $instance.retries > 0
 
 **Literals**: numbers, `"strings"` (single or double quotes), `true`, `false`, `null`, arrays `[1, 2, 3]`, and objects `{ key: expression }`.
 
-**Functions** are called as `name(arguments)`. Each belongs to a category you can type for discoverability — `string.cat(…)` and `cat(…)` are the same function:
+**Functions** are called by their namespaced name, `category.name(arguments)` — the form autocomplete offers and the editor displays. The bare name (`cat(…)` for `string.cat(…)`) also parses, but the editor rewrites it to the namespaced form:
 
 | Category | Functions |
 |---|---|
@@ -74,13 +74,13 @@ The most common source of subtly wrong conditions. A standalone keyword is **alw
 |---|---|
 | The (first) value | `$document.kw.Status.Value` |
 | How many values | `$document.kw.Status.Count` |
-| "Is X one of the values" | `in("X", $document.kw.Status)` |
+| "Is X one of the values" | `array.in("X", $document.kw.Status)` |
 
-Comparing the whole list to a single value (`$document.kw.Status == "X"`) is flagged by validation — use `.Value` or `in` instead.
+Comparing the whole list to a single value (`$document.kw.Status == "X"`) is flagged by validation — use `.Value` or `array.in` instead.
 
-Keyword groups follow the same pattern one level deeper: a single-instance group is a record whose fields are themselves lists (`$document.group.Address.City.Value`), and a multi-instance group is a list of records — test its instances with `some($document.group.LineItems, $item.Amount.Value > 100)`. WorkView attributes are single-valued: compare them directly, no `.Value`.
+Keyword groups follow the same pattern one level deeper: a single-instance group is a record whose fields are themselves lists (`$document.group.Address.City.Value`), and a multi-instance group is a list of records — test its instances with `array.some($document.group.LineItems, $item.Amount.Value > 100)`. WorkView attributes are single-valued: compare them directly, no `.Value`.
 
-Keyword values are usually text; when comparing to a number, convert first: `toNumber($document.kw.Amount.Value) >= 1000`.
+Keyword values are usually text; when comparing to a number, convert first: `number.toNumber($document.kw.Amount.Value) >= 1000`.
 
 ## Trigger filters
 
@@ -91,7 +91,7 @@ A trigger filter runs **before any instance exists**, so it evaluates against th
 - `$instance.*` and `$secrets.*` are not available
 
 ```text
-in("Pending", $document.keywords.Status)
+array.in("Pending", $document.keywords.Status)
 ```
 
 To start a workflow on every in-scope event, simply omit the filter.
