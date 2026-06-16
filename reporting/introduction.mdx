@@ -1,6 +1,6 @@
 ---
 title: "Introduction to Reporting"
-description: "Understand reporting dashboards in Nobly Insight — how data sources, dashboards, and elements fit together for consultants and super users."
+description: "Understand reporting dashboards in Nobly Insight — how data sources, dashboards, and elements fit together for the people who build and view them."
 icon: "chart-line"
 ---
 
@@ -8,14 +8,14 @@ icon: "chart-line"
 
 Reporting is the dashboard layer in Nobly Insight. It turns the data behind your solution into **dashboards** — pages of charts, tables, and value cards that update on demand and stay scoped to a date range you choose.
 
-Reporting is built around two roles:
+Reporting has two sides, each gated by a permission rather than a job title — whoever holds the permission can use it, whether they're a customer administrator, super user, or consultant:
 
 <Columns cols={2}>
-  <Card title="Consultants" icon="screwdriver-wrench">
-    Create the **data sources** (the queries that feed reporting) and **design the dashboards** — choosing sections, layout, elements, and how each element is configured.
+  <Card title="Building" icon="screwdriver-wrench">
+    With the **Manage Reporting** permissions, create the **data sources** (the queries that feed reporting) and **design the dashboards** — choosing sections, layout, elements, and how each element is configured.
   </Card>
-  <Card title="Super users" icon="user">
-    **View and explore** the finished dashboards — switching the date range, drilling into a chart, sorting and filtering tables, and exporting the data.
+  <Card title="Viewing" icon="user">
+    With the **View Reporting Dashboards** permission, **view and explore** the finished dashboards — switching the date range, drilling into a chart, sorting and filtering tables, and exporting the data.
   </Card>
 </Columns>
 
@@ -25,7 +25,7 @@ A dashboard is built from a small set of concepts. Reading them top to bottom mi
 
 <Steps>
   <Step title="Data source">
-    A named, saved query that returns rows and columns. Consultants author it once; every element that needs that data points at it. See [Data sources](/reporting/data-sources).
+    A named, saved query that returns rows and columns. You author it once; every element that needs that data points at it. See [Data sources](/reporting/data-sources).
   </Step>
   <Step title="Dashboard">
     A page that belongs to your solution and is made visible to chosen user groups.
@@ -43,7 +43,7 @@ A dashboard is built from a small set of concepts. Reading them top to bottom mi
 
 ## Element types
 
-Every element is one of four types. Consultants pick the type per element; super users simply read them.
+Every element is one of four types. The type is chosen per element when the dashboard is built; viewers simply read them.
 
 <AccordionGroup>
   <Accordion title="Value card (KPI)" icon="gauge-high">
@@ -82,12 +82,12 @@ A few features apply across every element on a dashboard:
 
 <Columns cols={2}>
   <Card title="Data sources" icon="database" href="/reporting/data-sources">
-    Consultants — author, test, and refresh the queries that feed reporting.
+    Author, test, and refresh the queries that feed reporting.
   </Card>
   <Card title="Building dashboards" icon="pen-ruler" href="/reporting/building-dashboards">
-    Consultants — design dashboards: sections, rows, elements, and per-element configuration.
+    Design dashboards: sections, rows, elements, and per-element configuration.
   </Card>
   <Card title="Viewing dashboards" icon="chart-mixed" href="/reporting/viewing-dashboards">
-    Super users — open, filter, explore, and export dashboards.
+    Open, filter, explore, and export dashboards.
   </Card>
 </Columns>

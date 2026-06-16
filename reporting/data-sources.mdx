@@ -7,7 +7,7 @@ icon: "database"
 A **data source** is a named, saved query that returns the rows and columns a dashboard element displays. You author it once, and every element that needs that data points at it.
 
 <Note>
-  This page is for **consultants**. Creating and editing data sources requires the **Manage Reporting Data Sources** permission. With **View Reporting Data Sources** only, you can see existing data sources but not change them.
+  Creating and editing data sources requires the **Manage Reporting Data Sources** permission — held by whoever builds reporting, whether a customer administrator, super user, or consultant. With **View Reporting Data Sources** only, you can see existing data sources but not change them.
 </Note>
 
 ## How a data source works
@@ -17,7 +17,7 @@ A data source has two states:
 - **Definition** — the query you author and save.
 - **Materialized snapshot** — the result set, captured into a snapshot table when you **refresh** the data source. Dashboards read from the snapshot, not from your live tables, so a heavy query runs only at refresh time and dashboards stay fast.
 
-Queries run under a dedicated **read-only reporting login**, not your own account. That login can only read the objects an administrator has granted it, which keeps reporting isolated from the rest of the system. They also run at a non-blocking (read-uncommitted) isolation level, so a heavy reporting query never locks or slows the live tables it reads.
+Reporting queries always run **read-only**, and only against the data an administrator has made available to reporting — never your own account's wider access. This keeps reporting isolated from the rest of the system. Queries also run in a non-blocking way, so a heavy reporting query never locks or slows the live tables it reads.
 
 ## Create a data source
 
@@ -30,13 +30,13 @@ Queries run under a dedicated **read-only reporting login**, not your own accoun
     </Frame>
   </Step>
   <Step title="Name the data source">
-    Give it a clear, descriptive name — this is what consultants pick from when adding an element.
+    Give it a clear, descriptive name — this is what you pick from when adding an element.
   </Step>
   <Step title="Write the query">
     Enter a `SELECT` query that returns the columns you want to report on. Keep it to the columns you need: the column names become the field names available to every element. Common table expressions (`WITH … SELECT`) are supported for structuring more complex queries.
   </Step>
   <Step title="Test it">
-    Click **Test SQL**. Nobly Insight validates the query, executes it under the reporting login with a preview row cap, and shows you the resulting columns and a sample of rows — so you can confirm the shape before saving.
+    Click **Test SQL**. Nobly Insight validates the query, runs it read-only with a preview row cap, and shows you the resulting columns and a sample of rows — so you can confirm the shape before saving.
 
     <Frame caption="The data source editor: write the SELECT, then Test SQL to validate it and preview the result.">
       <img src="/images/reporting/datasource-editor-1.png" alt="The data source editor showing the name, description, the SQL SELECT statement, and the Test SQL and Refresh now actions." />
@@ -58,11 +58,11 @@ To keep reporting safe and predictable, queries are validated before they run:
   <Accordion title="Read-only">
     Only read queries are allowed. Statements that change data or schema are rejected at validation. A few read-only constructs are also blocked for safety — linked-server and cross-database access, `OPENROWSET`, `EXEC`, and query hints among them — so if validation rejects a query it considers unsafe, the message names the construct to remove.
   </Accordion>
-  <Accordion title="Runs as the reporting login">
-    The query executes under the read-only reporting login. If it references an object that login can't read, the test fails with a message pointing at the missing grant — ask an administrator to grant the reporting login access to that object, rather than changing your query.
+  <Accordion title="Limited to the data reporting can read">
+    Reporting can only read the data an administrator has made available to it. If your query references something reporting can't read, the test fails with a message pointing at what's missing — ask an administrator to make that data available to reporting, rather than changing your query.
   </Accordion>
   <Accordion title="Allowed tables">
-    An administrator may pin reporting to a fixed set of source tables. When that allowlist is in place, a query that references any table not on it is rejected with a message naming the table (common table expressions are exempt). If you need a table that isn't allowed yet, ask an administrator to add it to the allowlist — and to grant the reporting login access to it.
+    An administrator may pin reporting to a fixed set of source tables. When that allowlist is in place, a query that references any table not on it is rejected with a message naming the table (common table expressions are exempt). If you need a table that isn't allowed yet, ask an administrator to add it to the allowlist — and to make sure reporting can read it.
   </Accordion>
   <Accordion title="Preview is capped">
     Test results are capped to a small preview (up to 10 rows) so a large query stays responsive while you author it. This preview cap is separate from the data source's row cap; the full result set is captured when you refresh.

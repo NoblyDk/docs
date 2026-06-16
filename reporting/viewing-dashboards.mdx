@@ -4,10 +4,10 @@ description: "Open, filter, explore, and export reporting dashboards in Nobly In
 icon: "chart-mixed"
 ---
 
-This page is for **super users** — anyone who reads and explores a dashboard a consultant has built. You don't need to know how a dashboard was made to get value from it.
+This page is for anyone who reads and explores a dashboard someone has built. You don't need to know how a dashboard was made to get value from it.
 
 <Note>
-  You'll see a dashboard in your list if you have the **View Reporting Dashboards** permission and belong to a user group it was shared with. If a dashboard you expect is missing, check that you have both — ask an administrator about the permission, and the consultant who built the dashboard to add your group.
+  You'll see a dashboard in your list if you have the **View Reporting Dashboards** permission and belong to a user group it was shared with. If a dashboard you expect is missing, check that you have both — ask an administrator about the permission, and whoever built the dashboard to add your group.
 </Note>
 
 ## Open a dashboard
@@ -55,7 +55,7 @@ Each element finds its own date column and keeps only the rows inside the window
     When a column has many categories, the smallest ones are grouped into a single **Other** slice so the chart stays readable. **Hover the Other slice** to see the categories behind it, and read each slice's value from the legend.
   </Accordion>
   <Accordion title="Sort and filter a table" icon="table">
-    Open the menu on any data grid column header to **sort** (ascending or descending) or **filter** the table by that column. A consultant may have set a default sort, which applies until you change it. Clearing your sort returns the table to no sorting.
+    Open the menu on any data grid column header to **sort** (ascending or descending) or **filter** the table by that column. A default sort may have been set when the dashboard was built, which applies until you change it. Clearing your sort returns the table to no sorting.
   </Accordion>
   <Accordion title="Read a value card" icon="gauge-high">
     Value cards show one headline number. A **gauge** shows progress toward a target; a **trend** card shows the change versus the previous period, with an arrow and percentage — hover the change for exactly which periods are compared.
@@ -76,11 +76,11 @@ Each element finds its own date column and keeps only the rows inside the window
 </Tip>
 
 <Note>
-  If a data source holds more rows than its row cap, the export covers only the captured rows and warns that it may be incomplete. Ask the consultant who owns the data source to raise its row cap if you need the full set.
+  If a data source holds more rows than its row cap, the export covers only the captured rows and warns that it may be incomplete. Ask whoever manages that data source to raise its row cap if you need the full set.
 </Note>
 
 ## Keeping data current
 
-If the numbers look out of date, check the **freshness** indicator. **Refresh** reloads the latest available data, but the underlying snapshot is only as current as the last time a consultant refreshed its [data source](/reporting/data-sources). If it's still stale after a refresh, ask the consultant who owns that data source to refresh it.
+If the numbers look out of date, check the **freshness** indicator. **Refresh** reloads the latest available data, but the underlying snapshot is only as current as the last time its [data source](/reporting/data-sources) was refreshed. If it's still stale after a refresh, ask whoever manages that data source to refresh it.
 
-Besides *Updated …*, an element's freshness can read **Awaiting first run** (never materialized yet), **Stale** (overdue for a refresh), **Schema drift detected** (the query's columns changed at the last refresh), or **Last run failed**. For any of these, the consultant who owns the data source is the person to contact.
+Besides *Updated …*, an element's freshness can read **Awaiting first run** (never materialized yet), **Stale** (overdue for a refresh), **Schema drift detected** (the query's columns changed at the last refresh), or **Last run failed**. For any of these, whoever manages the data source is the person to contact.
