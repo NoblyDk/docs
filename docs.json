@@ -80,6 +80,7 @@
               "configuration/keyword-types",
               "configuration/keyword-assignment-models",
               "configuration/autofill-keyword-sets",
+              "configuration/autofill-on-edit",
               "configuration/keyword-behaviour",
               "configuration/document-access-rights"
             ]
