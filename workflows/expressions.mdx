@@ -1,0 +1,135 @@
+---
+title: "References & expressions"
+description: "The formula language and reference catalog used in workflow guards, trigger filters, action parameters, and body templates."
+icon: "code"
+---
+
+## Where expressions appear
+
+Three kinds of fields in the designer take dynamic values:
+
+| Field | Editor | Example |
+|---|---|---|
+| **Conditions** — transition guards and trigger filters | Formula editor | `$document.kw.Status.Value == "Approved"` |
+| **Computed values** — action parameters switched to expression mode | Formula editor | `$instance.retries + 1` |
+| **Body templates** — free-text parameters like an email body or note text | Template editor | `Approved by {{identity.username}}` |
+
+The first two use the same **formula language**; body fields are plain prose with embedded `{{ }}` references.
+
+## The formula language
+
+A formula is a single expression: references, literals, operators, and function calls.
+
+```text
+$document.kw.Status.Value == "Approved" and $instance.retries > 0
+```
+
+**References** start with `$` and use dotted paths — `$instance.amount`, `$document.kw.Status`, `$object.attr.Total`. Typing `$` opens autocomplete with everything the workflow can see; a keyword or attribute whose name contains spaces uses the bracket form `$[Invoice Number]`. Hovering a reference shows its label and type.
+
+**Keywords are lists** (more below), so two suffixes do the common work: `.Value` is the first value, `.Count` is the number of values.
+
+**Operators** are the usual infix set — `==`, `!=`, `<`, `<=`, `>`, `>=`, `+`, `-`, `*`, `/`, `%` — with `and` / `or` (or `&&` / `||`) as connectives and `!` for negation. Comparisons are date-aware.
+
+**Literals**: numbers, `"strings"` (single or double quotes), `true`, `false`, `null`, arrays `[1, 2, 3]`, and objects `{ key: expression }`.
+
+**Functions** are called by their namespaced name, `category.name(arguments)` — the form autocomplete offers and the editor displays. The bare name (`cat(…)` for `string.cat(…)`) also parses, but the editor rewrites it to the namespaced form:
+
+| Category | Functions |
+|---|---|
+| `logic` | `if` |
+| `string` | `cat`, `substr`, `len`, `trim`, `upper`, `lower`, `left`, `right`, `mid`, `replace`, `contains`, `startsWith`, `endsWith`, `regexTest`, `regexFind`, `pad` |
+| `array` | `in`, `count`, `some`, `all`, `none`, `merge`, `index`, `recordOf` |
+| `existence` | `isNull`, `isEmpty`, `coalesce` |
+| `number` | `toNumber`, `formatNumber` |
+| `date` (UTC, ISO 8601) | `now`, `today`, `parseDate`, `addDays`, `addHours`, `addMonths`, `dateDiff`, `formatDate`, `year`, `month`, `day` |
+
+Inside `some` / `all` / `none`, `$item` is the current element (and `$item.Field` a field of it).
+
+The editor gives live feedback as you type: syntax errors are underlined at the offending character, unknown references are flagged, and the expression is type-checked against what the field needs — a guard must produce a boolean, a number parameter a number.
+
+## What you can reference
+
+The catalog depends on the workflow's anchor and scope:
+
+| Reference | Meaning |
+|---|---|
+| `$instance.<name>` | A workflow variable — set by `Property.Set`, a task input, an action's `IntoVariable`, or a parent workflow's `SetVars` |
+| `$document.id` / `$object.id` | The anchor's ID |
+| `$document.kw.<Name>` | A standalone keyword — always a **list** |
+| `$document.group.<Name>` | A keyword group — a record, or a list of records for multi-instance groups |
+| `$object.attr.<Name>` | A WorkView attribute — single-valued, keeps its native type |
+| `$identity.username` | The user whose action triggered the current step |
+| `$env.<name>` | A configured environment variable (plain text) |
+| `$secrets.<name>` | A secret — usable in action parameters only, **never in guards or filters** |
+
+<Note>
+Instances start from events with an empty variable bag, so `$instance.<name>` only resolves after something in the workflow has set it. An unset variable resolves to null — a guard reading it will silently misfire. Read from the document or object when in doubt.
+</Note>
+
+## Keywords are lists — cardinality rules
+
+The most common source of subtly wrong conditions. A standalone keyword is **always a list**, even when the keyword type holds a single value:
+
+| You want | Formula |
+|---|---|
+| The (first) value | `$document.kw.Status.Value` |
+| How many values | `$document.kw.Status.Count` |
+| "Is X one of the values" | `array.in("X", $document.kw.Status)` |
+
+Comparing the whole list to a single value (`$document.kw.Status == "X"`) is flagged by validation — use `.Value` or `array.in` instead.
+
+Keyword groups follow the same pattern one level deeper: a single-instance group is a record whose fields are themselves lists (`$document.group.Address.City.Value`), and a multi-instance group is a list of records — test its instances with `array.some($document.group.LineItems, $item.Amount.Value > 100)`. WorkView attributes are single-valued: compare them directly, no `.Value`.
+
+Keyword values are usually text; when comparing to a number, convert first: `number.toNumber($document.kw.Amount.Value) >= 1000`.
+
+## Trigger filters
+
+A trigger filter runs **before any instance exists**, so it evaluates against the event rather than workflow state, and its references differ:
+
+- Document events expose `$document.documentId`, `$document.documentTypeId`, `$document.documentTypeName`, plus `$document.keywords.<Name>` and `$document.groups.<Name>` — note the namespace differs from the in-workflow `$document.kw.<Name>` form
+- WorkView events expose the event's payload fields directly
+- `$instance.*` and `$secrets.*` are not available
+
+```text
+array.in("Pending", $document.keywords.Status)
+```
+
+To start a workflow on every in-scope event, simply omit the filter.
+
+## Body templates
+
+Free-text fields — an email body, a note text — open the template editor: normal prose with references embedded as `{{path}}` (no `$` prefix). Typing `{{` opens the same reference autocomplete, names with spaces use `{{[Invoice Number]}}`, and hovering a token shows the reference's label and type.
+
+```text
+Invoice {{document.kw.InvoiceNumber}} was approved by {{identity.username}}.
+```
+
+A body can also embed a whole computed expression with `{{= … =}}`, which holds JSONLogic (see below).
+
+## Under the hood: JSONLogic
+
+Formulas are the editing surface; the stored form is **JSONLogic**. You meet it when editing a definition in the designer's JSON view, or when generating definitions programmatically (for example with an AI agent):
+
+- Guards and trigger filters are stored as raw JSONLogic objects: `{ ">=": [ { "var": "instance.amount" }, 10000 ] }`
+- Computed action parameters are stored as `{{= JSONLogic =}}` strings: `"{{= { \"var\": \"instance.amount\" } =}}"` — the body must be valid JSON, so a constant string keeps its quotes (`{{= "Approved" =}}`)
+- References drop the `$` (`{"var": "instance.amount"}` — always namespaced, never bare `{"var": "amount"}`)
+- The list suffixes compile away: `.Value` becomes index `.0` (`{"var": "document.kw.Status.0"}`) and `.Count` becomes the `count` operator
+- Object literals compile to the `recordOf` operator
+
+The formula and JSON forms round-trip: the designer renders stored JSONLogic back as formula text wherever a textual form exists.
+
+## Rules that bite
+
+- **Secrets never appear in guards or filters.** Referencing `$secrets.*` in a condition is a publish-blocking error; this prevents secret values leaking through observable branching.
+- **References are validated advisorily.** Publish checks keyword, group, and attribute names against the workflow's scope and warns on anything it can't resolve — fix the typo or the scope.
+
+## Where to read next
+
+<Card
+  title="Action reference"
+  icon="bolt"
+  href="/workflows/actions"
+  horizontal
+>
+  The parameters these expressions feed into.
+</Card>

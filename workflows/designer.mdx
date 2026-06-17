@@ -1,0 +1,147 @@
+---
+title: "Building workflows in the designer"
+description: "Create, edit, validate, and publish workflow definitions in the visual designer — nodes, transitions, triggers, and versioning."
+icon: "pen-ruler"
+---
+
+## Prerequisites
+
+- The workflow feature must be enabled for your tenant
+- You need administrator access — the designer lives under **Settings → Admin → Workflow → Workflow Designer**
+
+## Designer at a glance
+
+The designer has three areas:
+
+- A **toolbar** with view toggle (**Canvas** / **JSON**), **Add Node**, **Auto Layout**, **History**, **Validate**, **Discard**, **Save**, and **Publish**
+- A **canvas** showing the workflow as a graph — drag nodes to arrange them, draw edges between nodes to create transitions, and right-click for context menus
+- A **property panel** on the right that edits whatever is selected: the definition itself, a node, or a transition
+
+You can switch to the **JSON** view at any time to edit the underlying definition directly; both views edit the same draft.
+
+## Creating a definition
+
+<Steps>
+  <Step title="Start a new definition">
+    Open **Workflow Designer** (or click **New Definition** from the Workflow Definitions list). Give it a **name**; the **ID** is derived automatically as a kebab-case slug and is locked after the first save.
+  </Step>
+  <Step title="Choose the anchor and scope">
+    Pick the **anchor type** — **Document** or **WorkView** — and its scope: one or more document types, or an application and class. The anchor cannot be changed once saved, and actions and expressions can only reference data inside the scope.
+  </Step>
+  <Step title="Add nodes and transitions">
+    Add nodes for each step of the process, name them, and draw transitions between them. Mark the final step(s) as **terminal**.
+  </Step>
+  <Step title="Set the initial node">
+    In the definition panel, pick the **initial node** — every instance starts there. Optionally pick an **error node** as the fallback when an action fails.
+  </Step>
+  <Step title="Configure triggers">
+    On the definition's **Triggers** tab, subscribe the workflow to the events that should start it. No triggers means the workflow can only be started manually or by another workflow.
+  </Step>
+  <Step title="Validate, save, and publish">
+    Run **Validate** to check the draft, **Save** it, then **Publish**. Only published workflows react to triggers.
+  </Step>
+</Steps>
+
+## Definition settings
+
+| Setting | Notes |
+|---|---|
+| **ID** | Kebab-case slug, required, locked after first save |
+| **Name** | Display name shown in admin lists and end-user surfaces |
+| **Description** | Optional free text |
+| **Anchor type** | **Document** or **WorkView**; fixed once saved |
+| **Scope** | Document types (document anchor) or application + class (WorkView anchor) |
+| **Initial node** | Where every instance starts |
+| **Error node** | Optional fallback node when an action fails (can be overridden per node) |
+
+## Nodes
+
+A node is one step of the process. Each node has:
+
+- A **name** — required and unique within the workflow (case-insensitive). This is the label end users and administrators see everywhere; internal IDs never surface outside the designer.
+- A **terminal** toggle — entering a terminal node completes the instance.
+- An **On Enter** tab — an ordered chain of [actions](/workflows/actions) that run every time an instance arrives at the node, regardless of which transition brought it in.
+- An optional **error node** override for failures in this node's actions.
+
+## Transitions
+
+A transition connects one node to another. Select an edge to configure it in the property panel:
+
+- **Guard** — an optional [condition](/workflows/expressions), written in the formula editor (for example `$instance.amount >= 10000`); the transition is only available when it evaluates truthy. Guards are evaluated once, when the instance enters the node.
+- **Actions** — an ordered chain that runs when the transition fires, before the target node is entered.
+- **Kind** — one of three:
+
+| Kind | Fires when |
+|---|---|
+| **Auto** | Immediately on node entry, if the guard passes. With several auto transitions, the first one whose guard passes wins. |
+| **Timer** | After an ISO-8601 duration (for example `PT5M` for 5 minutes, `P2D` for 2 days) parked at the node, if the guard passed on entry. |
+| **Task** | When a user completes the task from the [Tasks page](/workflows/tasks). |
+
+Two structural rules apply: a transition cannot point back at its own node (no self-loops), and a node cannot have two transitions to the same target.
+
+### Task transitions
+
+A task transition becomes a button in the end user's inbox. Configure:
+
+- **Label** (required) — the button text
+- **Style** — `primary` (default), `neutral`, or `critical` button variant
+- **Icon** — an optional icon name
+- **Visible to** — user groups allowed to see and complete the task; leave empty to allow everyone
+- **Inputs** — an optional form the user fills in when completing. Each input has a **name** (becomes the instance variable `instance.<name>` after completion), a **label**, a **type** (`string`, `number`, `boolean`, or `date`), and a **required** toggle.
+
+## Triggers
+
+Triggers auto-start instances from platform events. Each trigger subscribes to one event type, chosen to match the anchor:
+
+| Anchor | Event types |
+|---|---|
+| Document | `document.created`, `document.updated`, `document.deleted`, `document.reindexed`, `keywords.updated` |
+| WorkView | `workview.objectcreated`, `workview.objectupdated`, `workview.objectdeleted` |
+
+An instance starts when **all three gates** pass:
+
+1. The event type matches the trigger
+2. The item is inside the workflow's scope
+3. The trigger's optional **filter** (a [formula condition](/workflows/expressions#trigger-filters) against the event) evaluates truthy — no filter means every in-scope event of that type starts an instance
+
+Only one active instance per workflow per document/object exists at a time; events for an item that already has a running instance of that workflow do not start a second one.
+
+<Note>
+A trigger filter runs before any instance exists, so it reads the event — not workflow state. Document filters use `$document.keywords.<Name>` (note: not the in-workflow `$document.kw.<Name>` form) plus event fields like `$document.documentTypeId`. See [filter references](/workflows/expressions#trigger-filters) for the details.
+</Note>
+
+## Validation and publishing
+
+**Validate** runs the same checks as publish, without committing anything. Issues appear in a bar below the toolbar in two severities:
+
+- **Errors block publishing** — for example: no initial node, missing or duplicate node names, a transition with an undefined target, a self-loop, a missing required action parameter, an invalid timer duration, a task transition without a label, or a secret referenced in a guard.
+- **Warnings are advisory** — for example: a non-terminal node with no outgoing transitions (instances can get stuck there), an unknown action parameter (likely a typo), or a keyword referenced in an expression that doesn't exist on the scoped document types.
+
+**Publish** is available once the draft is saved with no unsaved changes. The publish dialog confirms the definition and version and accepts an optional release note. Published versions are immutable and live — triggers start matching as soon as the version is published.
+
+## Drafts and versions
+
+- A definition has at most **one open draft** at a time, edited in place by **Save**
+- **Publish** freezes the draft as an immutable published version
+- Editing a published version forks a **new draft**; the published version keeps running until the new one is published
+- The **History** button lists all versions and lets you open any of them
+
+## Where to read next
+
+<Card
+  title="Action reference"
+  icon="bolt"
+  href="/workflows/actions"
+  horizontal
+>
+  Every action type, its parameters, and what it does.
+</Card>
+
+<Card
+  title="References & expressions"
+  icon="code"
+  href="/workflows/expressions"
+  horizontal
+>
+  The reference paths, templating syntax, and condition rules used throughout the designer.
+</Card>
