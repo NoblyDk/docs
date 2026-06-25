@@ -108,7 +108,7 @@ There are three ways to integrate scripts:
 
 ### Script types
 
-Caseflow uses two script types:
+Caseflow uses three script types:
 
 <Tabs>
   <Tab title="workview_autofill">
@@ -132,6 +132,16 @@ Caseflow uses two script types:
     - Parameters object
 
     Script output is available to subsequent actions as `${scriptResult}`.
+  </Tab>
+  <Tab title="event_hook">
+    Triggered automatically by document events — `document.created`, `document.updated`, `document.deleted`, `document.reindexed`, `keywords.updated`. Bind a hook to a specific document type or to all document types. The request context includes:
+
+    - Event type (e.g. `document.created`)
+    - Document ID and document type
+    - The user who triggered the event
+    - Event payload (e.g. whether the content changed)
+
+    The expected result is an acknowledgement (`{"acknowledged": true}`). Hooks run in the background under a service account, so they're for side effects — notify downstream systems, run validations, sync data — not for returning values to a form.
   </Tab>
 </Tabs>
 
