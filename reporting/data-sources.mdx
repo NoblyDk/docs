@@ -1,0 +1,95 @@
+---
+title: "Data sources"
+description: "Author, test, and refresh the queries that feed reporting dashboards in Nobly Insight."
+icon: "database"
+---
+
+A **data source** is a named, saved query that returns the rows and columns a dashboard element displays. You author it once, and every element that needs that data points at it.
+
+<Note>
+  Creating and editing data sources requires the **Manage Reporting Data Sources** permission — held by whoever builds reporting, whether a customer administrator, super user, or consultant. With **View Reporting Data Sources** only, you can see existing data sources but not change them.
+</Note>
+
+## How a data source works
+
+A data source has two states:
+
+- **Definition** — the query you author and save.
+- **Materialized snapshot** — the result set, captured into a snapshot table when you **refresh** the data source. Dashboards read from the snapshot, not from your live tables, so a heavy query runs only at refresh time and dashboards stay fast.
+
+Reporting queries always run **read-only**, and only against the data an administrator has made available to reporting — never your own account's wider access. This keeps reporting isolated from the rest of the system. Queries also run in a non-blocking way, so a heavy reporting query never locks or slows the live tables it reads.
+
+## Create a data source
+
+<Steps>
+  <Step title="Open the reporting administration area">
+    Go to the reporting administration area and choose to add a new data source.
+
+    <Frame caption="The data sources list in the reporting administration area.">
+      <img src="/images/reporting/datasource-list.png" alt="The reporting administration data sources list, showing existing data sources with their freshness and a button to add a new one." />
+    </Frame>
+  </Step>
+  <Step title="Name the data source">
+    Give it a clear, descriptive name — this is what you pick from when adding an element.
+  </Step>
+  <Step title="Write the query">
+    Enter a `SELECT` query that returns the columns you want to report on. Keep it to the columns you need: the column names become the field names available to every element. Common table expressions (`WITH … SELECT`) are supported for structuring more complex queries.
+  </Step>
+  <Step title="Test it">
+    Click **Test SQL**. Nobly Insight validates the query, runs it read-only with a preview row cap, and shows you the resulting columns and a sample of rows — so you can confirm the shape before saving.
+
+    <Frame caption="The data source editor: write the SELECT, then Test SQL to validate it and preview the result.">
+      <img src="/images/reporting/datasource-editor-1.png" alt="The data source editor showing the name, description, the SQL SELECT statement, and the Test SQL and Refresh now actions." />
+    </Frame>
+  </Step>
+  <Step title="Save">
+    Save the data source. It is now selectable when designing dashboards.
+  </Step>
+  <Step title="Set a schedule and refresh">
+    Pick a refresh **schedule** (for example, *Hourly*) and a **row cap**, then use **Refresh now** to materialize the snapshot for the first time. After that, the data source refreshes on its schedule. Until the first refresh, elements bound to the source show a *Never run* (or *Awaiting first run*) freshness state.
+  </Step>
+</Steps>
+
+## Query rules
+
+To keep reporting safe and predictable, queries are validated before they run:
+
+<AccordionGroup>
+  <Accordion title="Read-only">
+    Only read queries are allowed. Statements that change data or schema are rejected at validation. A few read-only constructs are also blocked for safety — linked-server and cross-database access, `OPENROWSET`, `EXEC`, and query hints among them — so if validation rejects a query it considers unsafe, the message names the construct to remove.
+  </Accordion>
+  <Accordion title="Limited to the data reporting can read">
+    Reporting can only read the data an administrator has made available to it. If your query references something reporting can't read, the test fails with a message pointing at what's missing — ask an administrator to make that data available to reporting, rather than changing your query.
+  </Accordion>
+  <Accordion title="Allowed tables">
+    An administrator may pin reporting to a fixed set of source tables. When that allowlist is in place, a query that references any table not on it is rejected with a message naming the table (common table expressions are exempt). If you need a table that isn't allowed yet, ask an administrator to add it to the allowlist — and to make sure reporting can read it.
+  </Accordion>
+  <Accordion title="Preview is capped">
+    Test results are capped to a small preview (up to 10 rows) so a large query stays responsive while you author it. This preview cap is separate from the data source's row cap; the full result set is captured when you refresh.
+  </Accordion>
+</AccordionGroup>
+
+## Refresh and freshness
+
+A data source refreshes automatically on its **schedule**, and you can also refresh it on demand with **Refresh now**. Each refresh re-captures the snapshot under the row cap you set; if the query's columns have changed since the last refresh, the snapshot table is rebuilt to match — the refresh still succeeds, and the element's freshness then shows *Schema drift detected*.
+
+- **Schedule** — pick how often the data source refreshes (for example, *Hourly*). Set a **Preferred time (UTC)** when relevant, and use the **Enabled** toggle to pause scheduled runs.
+- **Row cap** — the maximum rows captured per refresh. Leave at zero to use the server default. If a source has more rows than the cap, dashboards read only the captured rows and elements show a notice that totals, charts, and exports may be incomplete — raise the cap for sources that need the full set.
+- **Blackout window** — scheduled runs skip when they would fall inside this window (for example, during a nightly maintenance window). **Manual refresh is not affected.**
+- **Freshness** — every dashboard element shows when its source was last refreshed (for example, *Updated 2 hr ago*), so viewers know how current the numbers are.
+
+<Frame caption="A data source's schedule, row cap, and blackout window.">
+  <img src="/images/reporting/datasource-editor-2.png" alt="The schedule section of the data source editor, showing the refresh schedule, preferred time, row cap, the Enabled toggle, and the blackout window start and end." />
+</Frame>
+
+<Note>
+  Changing a data source's **query or row cap** drops its current snapshot, so dashboards bound to it report the source as *stale* — with no data — until the next refresh. Click **Refresh now** after such an edit so its dashboards don't sit empty.
+</Note>
+
+<Tip>
+  Test the query before saving. After saving, the next scheduled run picks it up — or click **Refresh now** if you can't wait.
+</Tip>
+
+## Next
+
+Once a data source is saved and refreshed, you can surface it on a dashboard — see [Building dashboards](/reporting/building-dashboards).

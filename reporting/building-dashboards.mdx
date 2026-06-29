@@ -1,0 +1,101 @@
+---
+title: "Building dashboards"
+description: "Design reporting dashboards in Nobly Insight — sections, rows, elements, and how to configure each element type."
+icon: "pen-ruler"
+---
+
+Dashboards are assembled in the **dashboard designer**: you add sections, drop rows of elements into them, and configure each element. This page walks through the whole flow.
+
+<Note>
+  Building and editing dashboards requires the **Manage Reporting Dashboards** permission — held by whoever builds reporting, whether a customer administrator, super user, or consultant. You'll also need at least one saved, refreshed [data source](/reporting/data-sources) to bind elements to.
+</Note>
+
+## Create a dashboard
+
+<Steps>
+  <Step title="Add a dashboard">
+    From the reporting administration area, add a new dashboard and give it a clear name. The name is what super users see in their dashboard list.
+  </Step>
+  <Step title="Choose who can see it">
+    Set the **user groups** allowed to view the dashboard. Only members of those groups will find it in the viewer. Leaving this unset keeps the dashboard private to administrators.
+  </Step>
+  <Step title="Build the layout">
+    Use the layout editor to add sections, rows, and elements (below), then save.
+  </Step>
+</Steps>
+
+## Structure: sections, rows, and elements
+
+The designer mirrors how a dashboard reads on screen:
+
+- A **section** is an optional titled group. Give it a heading like *Headline* or *Activity breakdown*, or leave it untitled.
+- A **row** sits inside a section and holds elements side by side.
+- An **element** is one value card, table, or chart, bound to a data source.
+
+<Frame caption="The dashboard designer: sections contain rows, and each row contains one or more configured elements.">
+  <img src="/images/reporting/designer-overview.png" alt="The reporting dashboard designer showing a titled section containing a row of elements, with the per-element configuration expanded." />
+</Frame>
+
+### How many elements fit in a row
+
+Wider elements get fewer columns, so the number of elements a row allows depends on what's in it:
+
+| Element type | Max per row |
+| --- | --- |
+| Value card (KPI) | 5 |
+| Pie chart | 4 |
+| Bar chart | 4 |
+| Data grid | 2 |
+
+A **mixed row is limited by its most-constrained element** — for example, a row containing a data grid is capped at 2 elements regardless of what else is in it. When you reach the limit, adding another element is disabled.
+
+## Configure an element
+
+Every element starts with a **type** and a **data source**. The rest of the configuration depends on the type.
+
+<AccordionGroup>
+  <Accordion title="Value card (KPI)" icon="gauge-high">
+    Pick a **display**, then fill in the fields for it. Every display also accepts an optional short **label** and card **title**.
+
+    - **Number** — choose an **aggregate** (count, sum, average, min, or max) and, for anything other than count, the **value column** to aggregate. Pick a **number format**: integer, decimal, or percent.
+    - **Percentage** — choose a **column**, an **operator** (equals, not equals, contains, greater than, less than, is empty, is not empty), and a comparison **value** where the operator needs one. The card shows the percentage of rows that match, with a progress bar.
+    - **Gauge** — choose an aggregate and value column, set a **target**, and optionally add **color bands**: each band colors the gauge **Green**, **Amber**, or **Red** up to a threshold value.
+    - **Trend** — choose an aggregate and value column, a **date column** to measure over, and a **comparison period** (*This month vs last month* or *This year vs last year*). The card shows the current period's total and the change versus the previous period.
+  </Accordion>
+  <Accordion title="Data grid" icon="table">
+    - **Columns** — leave empty to show every column, or list specific columns; the order you list them is the column order shown.
+    - **Page size** — rows shown per page.
+    - **Default sort** — optionally pick a column and direction to sort by until the viewer changes it.
+    - **Conditional formatting** — add rules that color a row or text, or show an icon, when a column matches an operator/value. Rules are evaluated in order; the first match wins.
+    - **Click action** — optionally make rows open the related record (a Caseflow object, a document, or a URL built from the row's values).
+  </Accordion>
+  <Accordion title="Pie and Bar charts" icon="chart-pie">
+    - **Group-by column** — the category each slice or bar represents.
+    - **Aggregate** — count, sum, or average. For sum and average, also pick the **value column** to aggregate.
+    - **Time bucket** (bar charts only) — when the group-by column is a date, bucket it by day, week, month, quarter, or year.
+    - **Title** — an optional heading shown above the chart.
+    - **Click action** — like a data grid, optionally make a slice or bar open the related record (a Caseflow object, a document, or a URL built from the row's values).
+  </Accordion>
+</AccordionGroup>
+
+<Frame caption="Configuring a value card: the fields change with the chosen display.">
+  <img src="/images/reporting/element-config-kpi.png" alt="The value card configuration form in the dashboard designer, showing the display selector and the fields for the chosen display." />
+</Frame>
+
+## Save and publish
+
+When you save, the layout is validated. Saving is blocked if:
+
+- a row has more elements than its content allows (see the table above),
+- two elements share the same identifier, or
+- a section title is too long.
+
+Fix any reported issue and save again. A saved dashboard is immediately available to the user groups you allowed.
+
+<Tip>
+  Start each section with the headline value cards your audience cares about most, then put the supporting charts and tables below. Super users read top to bottom.
+</Tip>
+
+## Next
+
+See how the finished dashboard behaves for your audience in [Viewing dashboards](/reporting/viewing-dashboards).

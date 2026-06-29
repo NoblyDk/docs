@@ -1,0 +1,61 @@
+---
+title: "Setup & requirements"
+description: "What an administrator turns on to make reporting available on a tenant: enabling the feature, granting the reporting permissions, and switching on scheduled refresh."
+icon: "sliders"
+---
+
+## What this page is for
+
+Reporting is provisioned per tenant. Before anyone can author data sources or build dashboards, an administrator enables the feature for the tenant, grants the reporting permissions to the right user groups, and switches on the scheduled refresh that keeps dashboards current. This page is that checklist.
+
+## Permissions
+
+Reporting ships five permissions. They are seeded automatically; assign them to your user groups under **Admin settings → Access → Permissions**.
+
+| Permission | Grants |
+|---|---|
+| **View Reporting Dashboards** | Open the viewer and see dashboards shared with your groups |
+| **Manage Reporting Dashboards** | Create, edit, and delete dashboards |
+| **View Reporting Data Sources** | See data source definitions and run history |
+| **Manage Reporting Data Sources** | Create, edit, delete, test, and refresh data sources |
+| **Reporting Administration** | Full reporting access — a single grant that covers everything above |
+
+Typical assignments:
+
+- **Build everything** (author data sources and design dashboards): *Manage Reporting Data Sources* + *Manage Reporting Dashboards*.
+- **View dashboards**: *View Reporting Dashboards* — plus membership in a user group the dashboard was shared with. Both are required; see [Viewing dashboards](/reporting/viewing-dashboards).
+
+Like all application permissions, these are granted to user groups, never to individuals directly — see [Permissions & access](/permissions/introduction).
+
+## Keeping data current
+
+Dashboards read from **materialized snapshots**: each data source captures its results on a schedule, and dashboards read those captured results so a heavy query runs only at refresh time and dashboards stay fast.
+
+For dashboards to refresh, scheduled refresh must be switched on for the tenant. While it's off, the viewer keeps serving the last good snapshot for each data source, but nothing new is captured. Each data source then carries its own refresh schedule and an optional blackout window — see [Data sources](/reporting/data-sources).
+
+## Bring-up order
+
+<Steps>
+  <Step title="Confirm reporting is enabled">
+    Reporting is provisioned per tenant. Confirm it's switched on for your tenant before you begin.
+  </Step>
+  <Step title="Grant the reporting permissions">
+    Assign the reporting permissions above to the appropriate user groups (build vs. view).
+  </Step>
+  <Step title="Switch on scheduled refresh">
+    Make sure scheduled refresh is enabled for the tenant, so snapshots build and refresh on each data source's schedule.
+  </Step>
+  <Step title="Verify">
+    With the build permissions, create a [data source](/reporting/data-sources), run **Test SQL**, save and refresh it, then build a [dashboard](/reporting/building-dashboards) on top of it.
+  </Step>
+</Steps>
+
+## Where to read next
+
+<Card title="Data sources" icon="database" href="/reporting/data-sources" horizontal>
+  Author, test, and refresh the queries that feed reporting dashboards.
+</Card>
+
+<Card title="Permissions & access" icon="shield-halved" href="/permissions/introduction" horizontal>
+  How application permissions are granted to user groups across the platform.
+</Card>
